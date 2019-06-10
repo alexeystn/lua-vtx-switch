@@ -13,6 +13,7 @@ local MSP_EEPROM_WRITE = 250
 
 local newChannel = 1
 local isSaving = false
+local isSaved = false
 local saveRetries = 0
 local saveMaxRetries = protocol.saveMaxRetries or 2
 local saveTimeout = protocol.saveTimeout or 150
@@ -28,7 +29,7 @@ function processMspReply(cmd, rx_buf)
   end
 	if cmd == MSP_EEPROM_WRITE then
 	  isSaving = false
-	  -- reboot if neccessary
+    isSaved = true
 	end
 end
 
@@ -48,12 +49,17 @@ local function drawDisplay()
   lcd.clear()
   lcd.drawFilledRectangle(0, 0, LCD_W, 10)
   lcd.drawText(34, 1, "VTX channel", INVERS)
-  lcd.drawText(8, 56, "Press [ENTER] to save")
+  
   lcd.drawText(20, 28, "RaceBand", MIDSIZE)
   lcd.drawFilledRectangle(90, 25, 16, 18, SOLID)
   lcd.drawText(94, 26, tostring(newChannel), DBLSIZE + INVERS)
   if isSaving then
-    lcd.drawNumber(121, 1, saveRetries, INVERS)
+    lcd.drawText(45, 56, "Saving...")
+    --lcd.drawNumber(121, 1, saveRetries, INVERS)
+  elseif isSaved then
+    lcd.drawText(52, 56, "Done")
+  else
+    lcd.drawText(8, 56, "Press [ENTER] to save")
   end
   arrX = 97
   arrY = 34
@@ -78,11 +84,13 @@ local function run_func(event)
       if newChannel < 8 then
         newChannel = newChannel + 1
       end
+      isSaved = false
     end
     if event == EVT_ROT_LEFT then
       if newChannel > 1 then
         newChannel = newChannel - 1
       end
+      isSaved = false
     end 
     if event == EVT_ENTER_BREAK then
       saveSettings()
