@@ -20,6 +20,8 @@ local saveTimeout = protocol.saveTimeout or 150
 local saveTimestamp = 0
 local currentTime = 0
 
+local fatsharkBandEnabled = true
+
 function processMspReply(cmd, rx_buf)
   if cmd == nil or rx_buf == nil then
 	  return
@@ -34,8 +36,14 @@ function processMspReply(cmd, rx_buf)
 end
 
 local function saveSettings()
-  -- RaceBand (5 - 1) * 8, 25 mW, PitMode Off
-  protocol.mspWrite(MSP_VTX_SET_CONFIG, { 32 + newChannel - 1, 0, 1, 0 } )
+  local channelIndex
+  if newChannel <= 8 then
+    channelIndex = 32 + newChannel - 1 -- RaceBand
+  else
+    channelIndex = 24 + newChannel - 8 - 1 -- FatShark
+  end
+  -- channel, 25 mW, PitMode Off
+  protocol.mspWrite(MSP_VTX_SET_CONFIG, { channelIndex, 0, 1, 0 } )
 	saveTimestamp = getTime()
   if isSaving then
     saveRetries = saveRetries + 1
@@ -49,10 +57,13 @@ local function drawDisplay()
   lcd.clear()
   lcd.drawFilledRectangle(0, 0, LCD_W, 10)
   lcd.drawText(34, 1, "VTX channel", INVERS)
-  
-  lcd.drawText(20, 28, "RaceBand", MIDSIZE)
+  if newChannel <= 8 then
+    lcd.drawText(20, 28, "RaceBand", MIDSIZE)
+  else
+    lcd.drawText(20, 28, "FatShark", MIDSIZE)
+  end
   lcd.drawFilledRectangle(90, 25, 16, 18, SOLID)
-  lcd.drawText(94, 26, tostring(newChannel), DBLSIZE + INVERS)
+  lcd.drawText(94, 26, tostring(((newChannel - 1) % 8) + 1), DBLSIZE + INVERS)
   if isSaving then
     lcd.drawText(45, 56, "Saving...")
     --lcd.drawNumber(121, 1, saveRetries, INVERS)
@@ -81,7 +92,7 @@ local function run_func(event)
     end
 	else
     if event == EVT_ROT_RIGHT then
-      if newChannel < 8 then
+      if (newChannel < 8) or (fatsharkBandEnabled and (newChannel < 16)) then
         newChannel = newChannel + 1
       end
       isSaved = false
