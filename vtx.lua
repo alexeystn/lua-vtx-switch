@@ -5,6 +5,9 @@ radio = assert(loadScript("radios.lua"))()
 assert(loadScript(protocol.transport))()
 assert(loadScript("MSP/common.lua"))()
 
+local FATSHARK_BAND = 4
+local RACEBAND_BAND = 5
+
 local MSP_VTX_CONFIG = 88 
 local MSP_VTX_SET_CONFIG = 89
 local MSP_EEPROM_WRITE = 250
@@ -36,9 +39,9 @@ end
 local function saveSettings()
   local channelIndex
   if newChannel <= 8 then
-    channelIndex = 32 + newChannel - 1 -- RaceBand
+    channelIndex = (RACEBAND_BAND - 1) * 8 + newChannel - 1
   else
-    channelIndex = 24 + newChannel - 8 - 1 -- FatShark
+    channelIndex = (FATSHARK_BAND - 1) * 8 + newChannel - 8 - 1
   end
   -- channel, 25 mW, PitMode Off
   protocol.mspWrite(MSP_VTX_SET_CONFIG, { channelIndex, 0, 1, 0 } )
