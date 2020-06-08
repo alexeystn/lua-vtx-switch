@@ -1,11 +1,9 @@
-SCRIPT_HOME = "/SCRIPTS/BF"
+chdir("/SCRIPTS/BF")
 
-protocol = assert(loadScript(SCRIPT_HOME.."/protocols.lua"))()
-radio = assert(loadScript(SCRIPT_HOME.."/radios.lua"))()
-
-assert(loadScript(radio.preLoad))()
+protocol = assert(loadScript("protocols.lua"))()
+radio = assert(loadScript("radios.lua"))()
 assert(loadScript(protocol.transport))()
-assert(loadScript(SCRIPT_HOME.."/MSP/common.lua"))()
+assert(loadScript("MSP/common.lua"))()
 
 local MSP_VTX_CONFIG = 88 
 local MSP_VTX_SET_CONFIG = 89
@@ -115,12 +113,3 @@ local function run_func(event)
 end
 
 return { run=run_func }
-
---[[
-  protocol.mspRead(MSP_VTX_CONFIG)
-  if cmd == MSP_VTX_CONFIG then
-    if #rxBuf >= 3 then
-      currentChannel = rxBuf[3]
-    end
-  end
-]]--
