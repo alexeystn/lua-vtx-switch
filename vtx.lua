@@ -30,10 +30,10 @@ function processMspReply(cmd, rx_buf)
   if cmd == MSP_VTX_SET_CONFIG then
     protocol.mspRead(MSP_EEPROM_WRITE)
   end
-	if cmd == MSP_EEPROM_WRITE then
-	  isSaving = false
+  if cmd == MSP_EEPROM_WRITE then
+    isSaving = false
     isSaved = true
-	end
+  end
 end
 
 local function saveSettings()
@@ -45,7 +45,7 @@ local function saveSettings()
   end
   -- channel, 25 mW, PitMode Off
   protocol.mspWrite(MSP_VTX_SET_CONFIG, { channelIndex, 0, 1, 0 } )
-	saveTimestamp = getTime()
+  saveTimestamp = getTime()
   if isSaving then
     saveRetries = saveRetries + 1
   else
@@ -82,16 +82,16 @@ local function drawDisplay()
 end
 
 local function run_func(event)  
-	currentTime = getTime()
+  currentTime = getTime()
   if isSaving then
-		if (saveTimestamp + saveTimeout < currentTime) then
+    if (saveTimestamp + saveTimeout < currentTime) then
       if saveRetries < saveMaxRetries then
         saveSettings()
       else
         isSaving = false
       end
     end
-	else
+  else
     if event == EVT_ROT_RIGHT then
       if (newChannel < 8) or (fatsharkBandEnabled and (newChannel < 16)) then
         newChannel = newChannel + 1
@@ -109,9 +109,9 @@ local function run_func(event)
       isSaving = true
     end
   end
-	drawDisplay()
+  drawDisplay()
   mspProcessTxQ()
-	processMspReply(mspPollReply())
+  processMspReply(mspPollReply())
   return 0
 end
 
