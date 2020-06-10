@@ -25,7 +25,7 @@ local fatsharkBandEnabled = true
 
 function processMspReply(cmd, rx_buf)
   if cmd == nil or rx_buf == nil then
-	  return
+    return
   end
   if cmd == MSP_VTX_SET_CONFIG then
     protocol.mspRead(MSP_EEPROM_WRITE)
