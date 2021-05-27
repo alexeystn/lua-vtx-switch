@@ -1,7 +1,6 @@
 chdir("/SCRIPTS/BF")
 
 protocol = assert(loadScript("protocols.lua"))()
-radio = assert(loadScript("radios.lua"))()
 assert(loadScript(protocol.transport))()
 assert(loadScript("MSP/common.lua"))()
 
@@ -13,30 +12,48 @@ local MSP_VTX_SET_CONFIG = 89
 local MSP_EEPROM_WRITE = 250
 
 local newChannel = 1
-local isSaving = false
-local isSaved = false
-local saveRetries = 0
-local saveMaxRetries = protocol.saveMaxRetries or 2
-local saveTimeout = protocol.saveTimeout or 150
-local saveTimestamp = 0
-local currentTime = 0
-
 local fatsharkBandEnabled = true
 
-function processMspReply(cmd, rx_buf)
-  if cmd == nil or rx_buf == nil then
-    return
-  end
-  if cmd == MSP_VTX_SET_CONFIG then
-    protocol.mspRead(MSP_EEPROM_WRITE)
-  end
-  if cmd == MSP_EEPROM_WRITE then
-    isSaving = false
-    isSaved = true
+local retryCount = 0
+local maxRetries = 4
+local retryTimeout = 200
+local currentTime = 0
+local nextTime = 0
+
+local IDLE=1
+local SWITCHING=2
+local SAVING=3
+local DONE=4
+
+local state = IDLE
+
+local buttonState = false
+
+
+function getButtonState()
+  if buttonState then
+    buttonState = false
+    return true
+  else 
+    return false
   end
 end
 
-local function saveSettings()
+
+function setButtonState()
+  buttonState = true
+end
+
+
+local function sendSaveCommand()
+  protocol.mspRead(MSP_EEPROM_WRITE)
+  print("MSP_EEPROM_WRITE")
+  nextTime = getTime() + retryTimeout
+  state = SAVING
+end
+
+
+local function sendSwitchCommand()
   local channelIndex
   if newChannel <= 8 then
     channelIndex = (RACEBAND_BAND - 1) * 8 + newChannel - 1
@@ -45,14 +62,34 @@ local function saveSettings()
   end
   -- channel, 25 mW, PitMode Off
   protocol.mspWrite(MSP_VTX_SET_CONFIG, { channelIndex, 0, 1, 0 } )
-  saveTimestamp = getTime()
-  if isSaving then
-    saveRetries = saveRetries + 1
-  else
-    isSaving = true
-    saveRetries = 0
+  print("MSP_VTX_SET_CONFIG")
+  nextTime = getTime() + retryTimeout
+  state = SWITCHING
+end
+
+function processMspReply(cmd, rx_buf)
+--[[  if getButtonState() then
+    if state == SWITCHING then
+      sendSwitchCommand()
+      retryCount = 0
+      state = SAVING
+    elseif state == SAVING then 
+      state = DONE
+    end
+  end]]--
+  if cmd == nil or rx_buf == nil then
+    return
+  end
+  if cmd == MSP_VTX_SET_CONFIG and state == SWITCHING then
+    sendSwitchCommand()
+    retryCount = 0
+    state = SAVING
+  end
+  if cmd == MSP_EEPROM_WRITE and state == SAVING then
+    state = DONE
   end
 end
+
 
 local function drawDisplay()
   lcd.clear()
@@ -65,13 +102,16 @@ local function drawDisplay()
   end
   lcd.drawFilledRectangle(90, 25, 16, 18, SOLID)
   lcd.drawText(94, 26, tostring(((newChannel - 1) % 8) + 1), DBLSIZE + INVERS)
-  if isSaving then
-    lcd.drawText(45, 56, "Saving...")
-    --lcd.drawNumber(121, 1, saveRetries, INVERS)
-  elseif isSaved then
-    lcd.drawText(52, 56, "Done")
-  else
+  if state == IDLE then
     lcd.drawText(8, 56, "Press [ENTER] to save")
+  elseif state == SWITCHING then 
+    lcd.drawText(35, 56, "Switching...")
+    lcd.drawNumber(121, 1, retryCount + 1, INVERS)
+  elseif  state == SAVING then 
+    lcd.drawText(45, 56, "Saving...")
+    lcd.drawNumber(121, 1, retryCount + 1, INVERS)
+  else
+    lcd.drawText(52, 56, "Done")
   end
   arrX = 97
   arrY = 34
@@ -81,14 +121,24 @@ local function drawDisplay()
   end
 end
 
-local function run_func(event)  
+
+local function run_func(event)    
+  if event == EVT_MENU_BREAK then
+    setButtonState()
+  end
+  print(state)
   currentTime = getTime()
-  if isSaving then
-    if (saveTimestamp + saveTimeout < currentTime) then
-      if saveRetries < saveMaxRetries then
-        saveSettings()
+  if (state ~= IDLE) and (state ~= DONE) then
+    if currentTime > nextTime then
+      if retryCount < maxRetries then
+        if state == SAVING then 
+          sendSaveCommand()
+        elseif state == SWITCHING then
+          sendSwitchCommand()
+        end
+        retryCount = retryCount + 1
       else
-        isSaving = false
+        state = IDLE
       end
     end
   else
@@ -96,17 +146,17 @@ local function run_func(event)
       if (newChannel < 8) or (fatsharkBandEnabled and (newChannel < 16)) then
         newChannel = newChannel + 1
       end
-      isSaved = false
+      state = IDLE
     end
     if event == EVT_ROT_LEFT then
       if newChannel > 1 then
         newChannel = newChannel - 1
       end
-      isSaved = false
+      state = IDLE
     end 
     if event == EVT_ENTER_BREAK then
-      saveSettings()
-      isSaving = true
+      retryCount = 0
+      sendSwitchCommand()
     end
   end
   drawDisplay()
@@ -114,5 +164,6 @@ local function run_func(event)
   processMspReply(mspPollReply())
   return 0
 end
+
 
 return { run=run_func }
