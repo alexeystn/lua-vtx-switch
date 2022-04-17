@@ -1,6 +1,7 @@
 chdir("/SCRIPTS/BF")
 
 protocol = assert(loadScript("protocols.lua"))()
+--assert(loadScript(protocol.mspTransport))()
 assert(loadScript(protocol.transport))()
 assert(loadScript("MSP/common.lua"))()
 

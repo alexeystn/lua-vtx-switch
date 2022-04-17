@@ -1,9 +1,5 @@
-chdir("/SCRIPTS/BF")
-
-protocol = assert(loadScript("protocols.lua"))()
-assert(loadScript(protocol.transport))()
-assert(loadScript("MSP/common.lua"))()
-
+chdir("/SCRIPTS/TELEMETRY")
+assert(loadScript("/SCRIPTS/TELEMETRY/ledvtx_crsf.lua"))()
 
 local colorNames = { "Red", "Yellow", "Green", "Cyan", "Blue", "Violet", "White", "Black" }
 local colorIds = { 2, 3, 6, 8, 10, 13, 1, 0 }
@@ -142,7 +138,7 @@ end
 
 
 local function sendSaveCommand()
-  protocol.mspRead(MSP_EEPROM_WRITE)
+  mspRead(MSP_EEPROM_WRITE)
   print("MSP_EEPROM_WRITE")
   nextTime = getTime() + retryTimeout
   state = SAVING
@@ -151,7 +147,7 @@ end
 
 local function sendSwitchVtxCommand()
   local channelIndex = (bandIds[math.floor((vtxChannel - 1) / 8) + 1] - 1) * 8 + ((vtxChannel - 1) % 8 )
-  protocol.mspWrite(MSP_VTX_SET_CONFIG, { channelIndex, 0, 1, 0 } )
+  mspWrite(MSP_VTX_SET_CONFIG, { channelIndex, 0, 1, 0 } )
   print("MSP_VTX_SET_CONFIG")
   nextTime = getTime() + retryTimeout
   state = SWITCHING_VTX
@@ -159,7 +155,7 @@ end
 
 
 local function sendSwitchLedCommand()
-  protocol.mspWrite(MSP_SET_LED_STRIP, { 0, 0, 0, (colorIds[ledColor])*4, 0 } )
+  mspWrite(MSP_SET_LED_STRIP, { 0, 0, 0, (colorIds[ledColor])*4, 0 } )
   print("MSP_SET_LED_STRIP")
   nextTime = getTime() + retryTimeout
   state = SWITCHING_LED
@@ -240,6 +236,9 @@ local function run_func(event)
   end
   if event == EVT_MENU_BREAK then
     setButtonState()
+  end
+  if event == EVT_ENTER_LONG then
+    pressSave()
   end
   if event == EVT_EXIT_BREAK then
     state = IDLE
