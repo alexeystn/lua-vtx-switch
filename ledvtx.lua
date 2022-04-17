@@ -16,12 +16,14 @@ local vtxChannel = 1
 
 local ITEM_LED = 1
 local ITEM_VTX = 2
+local ITEM_SAVE = 3
 
 local retryCount = 0
 local maxRetries = 4
 local retryTimeout = 200
 local currentTime = 0
 local nextTime = 0
+local nextRtcTime = 0
 
 local IDLE=1
 local SWITCHING_LED=2
@@ -34,6 +36,7 @@ local state = IDLE
 local MSP_VTX_SET_CONFIG = 89
 local MSP_EEPROM_WRITE = 250
 local MSP_SET_LED_STRIP = 49
+local MSP_SET_RTC = 246
 
 local buttonState = false
 
@@ -95,7 +98,6 @@ local function menuMoveUp()
 end
 
 
-
 local function getBandName()
   local vtxChanNum =  tostring((vtxChannel - 1) % 8 + 1)
   local vtxBandNum = bandNames[math.floor((vtxChannel - 1) / 8) + 1]
@@ -103,11 +105,10 @@ local function getBandName()
 end
 
 
-
 local function getStatusText()
   local result
   if state == IDLE then
-   result = "Press [ENTER] to save"
+   result = "[Save]"
   elseif state == SWITCHING_LED then 
     result = "Switching LED...  " .. tostring(retryCount + 1)
   elseif state == SWITCHING_VTX then 
@@ -121,19 +122,34 @@ local function getStatusText()
 end
 
 
-local function drawDisplay()
-  local d = 16
-  lcd.clear()
-  lcd.drawText(20, 0, colorNames[ledColor], MIDSIZE)
-  lcd.drawText(20, d, getBandName(), MIDSIZE)
-  lcd.drawText(20, d*2, "Save", MIDSIZE)
-  lcd.drawText(5, d*3, getStatusText())
-  if isItemSelected then
-    text = ">"
-  else
-    text = "-"
+local function drawItem(pos, text, offset)
+  local flags = 0 
+  if menuPosition == pos then
+    lcd.drawRectangle(10, 16 * (pos - 1) + 5, 90,17)
+    if isItemSelected then
+      lcd.drawFilledRectangle(10, 16 * (pos - 1) + 5 ,90,17)
+      flags = INVERS
+    end
   end
-  lcd.drawText(10, (menuPosition-1)*d, text, MIDSIZE)  
+  lcd.drawText(16, (pos - 1) * 16 +7 , text, flags + MIDSIZE)
+end
+
+
+local function drawSave()
+  if menuPosition == ITEM_SAVE and state == IDLE then
+    flag = INVERS
+  else
+    flag = 0
+  end
+  lcd.drawText(16, 48, getStatusText(), flag)  
+end
+
+
+local function drawDisplay()
+  lcd.clear()
+  drawItem(1, colorNames[ledColor], 0)
+  drawItem(2, getBandName(), 0)
+  drawSave()
 end
 
 
@@ -142,6 +158,20 @@ local function sendSaveCommand()
   print("MSP_EEPROM_WRITE")
   nextTime = getTime() + retryTimeout
   state = SAVING
+end
+
+
+local function sendSetRtcCommand()
+  local now = getRtcTime()
+  local values = {}
+  for i = 1, 4 do
+    values[i] = bit32.band(now, 0xFF)
+    now = bit32.rshift(now, 8)
+  end
+  values[5] = 0 
+  values[6] = 0
+  mspWrite(MSP_SET_RTC, values)
+  print("MSP_SET_RTC")
 end
 
 
@@ -237,12 +267,9 @@ local function run_func(event)
   if event == EVT_MENU_BREAK then
     setButtonState()
   end
-  if event == EVT_ENTER_LONG then
-    pressSave()
-  end
   if event == EVT_EXIT_BREAK then
     state = IDLE
-    retryCount = retryCount + 1
+    retryCount = 0
   end  
   if state == DONE and (event == EVT_ROT_LEFT or event == EVT_ROT_RIGHT) then 
     state = IDLE
@@ -256,4 +283,12 @@ local function run_func(event)
 end
 
 
-return { run=run_func }
+local function bg_func()
+  if getTime() > nextRtcTime then
+    nextRtcTime = getTime() + 500
+    sendSetRtcCommand()
+  end
+end
+
+
+return { run=run_func, background=bg_func }
