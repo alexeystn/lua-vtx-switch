@@ -42,6 +42,7 @@ local MSP_SET_RTC = 246
 
 local buttonState = false
 
+local LCD_C = 64 -- LCDW / 2
 
 function testKey()
   if buttonState then
@@ -110,17 +111,16 @@ end
 local function getStatusText()
   local result
   if state == IDLE then
-   result = "Save"
+    return "Save", 10
   elseif state == SWITCHING_LED then 
-    result = "Switching LED...  " .. tostring(retryCount + 1)
+    return "Switching LED...  " .. tostring(retryCount + 1), 40
   elseif state == SWITCHING_VTX then 
-    result = "Switching VTX...  " .. tostring(retryCount + 1)
+    return "Switching VTX...  " .. tostring(retryCount + 1), 40
   elseif  state == SAVING then 
-    result = "Saving...  " ..  tostring(retryCount + 1)
+    return "Saving...  " ..  tostring(retryCount + 1), 30
   else
-    result = "Done"
+    return "Done", 10
   end
-  return result
 end
 
 
@@ -133,26 +133,28 @@ end
 
 local function drawItem(pos, text, offset)
   local flags = 0 
+  local off = math.floor(string.len(text) * 7 / 2) + 1
   if menuPosition == pos then
     flags = INVERS
     if isItemSelected then
-      drawArrow(3, 16 * (pos - 1) + 13, 1) 
-      drawArrow(106, 16 * (pos - 1) + 13, -1) 
+      drawArrow(LCD_C-57, 18*(pos-1)+13, 1) 
+      drawArrow(LCD_C+56, 18*(pos-1)+13, -1) 
     end
-      lcd.drawFilledRectangle(10+1, 1+16 * (pos - 1) + 5 ,90-2,17-2, SOLID)
+      lcd.drawFilledRectangle(LCD_C-50, 18*(pos-1)+5 , 100, 17, SOLID)
   end
-  lcd.drawText(16, (pos - 1) * 16 +7 , text, flags + MIDSIZE)
+  lcd.drawText(LCD_C-off, (pos-1)*18+7 , text, flags + MIDSIZE)
 end
 
 
 local function drawSave()
   if menuPosition == ITEM_SAVE and (state == IDLE or state == DONE) then
     flag = INVERS
-    lcd.drawFilledRectangle(14, 46 , 85, 12, SOLID)
+    lcd.drawFilledRectangle(LCD_C-30, 46 , 60, 12, SOLID)
   else
     flag = 0
   end
-  lcd.drawText(16, 48, getStatusText(), flag)  
+  local text, offset = getStatusText()
+  lcd.drawText(LCD_C-offset, 48, text, flag)  
 end
 
 
