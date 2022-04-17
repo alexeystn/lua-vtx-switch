@@ -1,5 +1,7 @@
-chdir("/SCRIPTS/TELEMETRY")
+--chdir("/SCRIPTS/TELEMETRY")
 assert(loadScript("/SCRIPTS/TELEMETRY/ledvtx_crsf.lua"))()
+
+local settingsPath = "/SCRIPTS/TELEMETRY/ledvtx.txt"
 
 local colorNames = { "Red", "Yellow", "Green", "Cyan", "Blue", "Violet", "White", "Black" }
 local colorIds = { 2, 3, 6, 8, 10, 13, 1, 0 }
@@ -108,7 +110,7 @@ end
 local function getStatusText()
   local result
   if state == IDLE then
-   result = "[Save]"
+   result = "Save"
   elseif state == SWITCHING_LED then 
     result = "Switching LED...  " .. tostring(retryCount + 1)
   elseif state == SWITCHING_VTX then 
@@ -122,22 +124,31 @@ local function getStatusText()
 end
 
 
+local function drawArrow(arrX, arrY, dir)
+  for i = 0, 4 do
+    lcd.drawLine(arrX+i*dir, arrY-i, arrX+i*dir, arrY+i, SOLID, FORCE)
+  end
+end
+
+
 local function drawItem(pos, text, offset)
   local flags = 0 
   if menuPosition == pos then
-    lcd.drawRectangle(10, 16 * (pos - 1) + 5, 90,17)
+    flags = INVERS
     if isItemSelected then
-      lcd.drawFilledRectangle(10, 16 * (pos - 1) + 5 ,90,17)
-      flags = INVERS
+      drawArrow(3, 16 * (pos - 1) + 13, 1) 
+      drawArrow(106, 16 * (pos - 1) + 13, -1) 
     end
+      lcd.drawFilledRectangle(10+1, 1+16 * (pos - 1) + 5 ,90-2,17-2, SOLID)
   end
   lcd.drawText(16, (pos - 1) * 16 +7 , text, flags + MIDSIZE)
 end
 
 
 local function drawSave()
-  if menuPosition == ITEM_SAVE and state == IDLE then
+  if menuPosition == ITEM_SAVE and (state == IDLE or state == DONE) then
     flag = INVERS
+    lcd.drawFilledRectangle(14, 46 , 85, 12, SOLID)
   else
     flag = 0
   end
@@ -212,8 +223,33 @@ function processMspReply(cmd, rx_buf)
 end
 
 
+local function loadSettings()
+  local f = io.open(settingsPath, "r")
+  if f then
+    savedColor = tonumber(io.read(f, 2))
+    io.read(f, 1)
+    savedChannel = tonumber(io.read(f, 2))
+    if not savedColor or not savedChannel then
+      return
+    end
+    if savedColor >= 1 and savedColor <= #colorNames then
+      ledColor = savedColor
+    end
+    if savedChannel >= 1 and savedChannel <= #bandNames * 8 then
+      vtxChannel = savedChannel
+    end
+  end
+end
+
+local function saveSettings()
+  local f = io.open(settingsPath, "w")
+  io.write(f, string.format("%2d %2d",ledColor, vtxChannel))
+  io.close(f)
+end
+
 
 local function pressSave()
+  saveSettings()
   retryCount = 0
   sendSwitchVtxCommand()
 end
@@ -288,7 +324,14 @@ local function bg_func()
     nextRtcTime = getTime() + 500
     sendSetRtcCommand()
   end
+  mspProcessTxQ()
+  processMspReply(mspPollReply())
 end
 
 
-return { run=run_func, background=bg_func }
+local function init_func()
+  loadSettings()
+end
+
+
+return { run=run_func, background=bg_func, init=init_func}
