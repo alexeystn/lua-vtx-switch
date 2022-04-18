@@ -3,11 +3,11 @@ assert(loadScript("/SCRIPTS/TELEMETRY/ledvtx_crsf.lua"))()
 
 local settingsPath = "/SCRIPTS/TELEMETRY/ledvtx.txt"
 
-local colorNames = { "Red", "Yellow", "Green", "Cyan", "Blue", "Violet", "White", "Black" }
-local colorIds = { 2, 3, 6, 8, 10, 13, 1, 0 }
+local colorNames = { "Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Violet", "White", "Black" }
+local colorIds = { 2, 3, 4, 6, 8, 10, 13, 1, 0 }
 
-local bandNames = { "Raceband", "Fatshark" }
-local bandIds = { 5, 4 }
+local bandNames = { "Raceband", "Fatshark", "Lowband" }
+local bandIds = { 5, 4, 7 }
 
 local menuPosition = 1
 local menuLength = 3
@@ -113,11 +113,11 @@ local function getStatusText()
   if state == IDLE then
     return "Save", 10
   elseif state == SWITCHING_LED then 
-    return "Switching LED...  " .. tostring(retryCount + 1), 40
+    return "Switching LED... (" .. tostring(retryCount + 1) .. ")", 43
   elseif state == SWITCHING_VTX then 
-    return "Switching VTX...  " .. tostring(retryCount + 1), 40
+    return "Switching VTX... (" .. tostring(retryCount + 1) .. ")", 43
   elseif  state == SAVING then 
-    return "Saving...  " ..  tostring(retryCount + 1), 30
+    return "Saving... (" ..  tostring(retryCount + 1) .. ")", 25
   else
     return "Done", 10
   end
