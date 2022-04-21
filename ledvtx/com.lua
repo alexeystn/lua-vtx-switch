@@ -31,18 +31,6 @@ end
 
 function setDebugButtonState()
   buttonState = true
-  print("Button")
-end
-
-
-function processMspReply(cmd, rx_buf)
-  local key = testKey()
-  if (cmd == nil or rx_buf == nil) and not key then
-    return
-  end
-  if (cmd == currentCommand  or key) and isBusy then
-    gotoNextCommand()
-  end
 end
 
 
@@ -56,7 +44,6 @@ local function sendCurrentCommand()
   else
     msp.read(currentCommand.header, currentCommand.payload)
   end
-  print(currentCommand.text)
   nextTime = getTime() + retryTimeout
   
 end
@@ -73,6 +60,18 @@ local function gotoNextCommand()
     isBusy = false
   end
 end
+
+
+function processMspReply(cmd, rx_buf)
+  local key = testKey()
+  if (cmd == nil or rx_buf == nil) and not key then
+    return
+  end
+  if ((cmd == currentCommand.header) or key) and isBusy then
+    gotoNextCommand()
+  end
+end
+
 
 local function startTransmission(commands) 
   commandSequence = commands
