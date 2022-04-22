@@ -22,13 +22,14 @@ local function drawSelector(pos, text, isSelected, isActive)
 end
 
 
-local function drawButton(text, offset, isSelected)
+local function drawButton(text, isSelected)
   if isSelected then
     flag = INVERS
     lcd.drawFilledRectangle(LCD_C-30, 46 , 60, 12, SOLID)
   else
     flag = 0
   end
+  offset = math.floor((string.len(text)*5)/2)
   lcd.drawText(LCD_C-offset, 48, text, flag)  
 end
 

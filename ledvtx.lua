@@ -30,6 +30,7 @@ local ITEM_SAVE = 3
 local IDLE=1
 local BUSY=2
 local DONE=3
+local FAIL=4
 
 local state = IDLE
 
@@ -86,14 +87,31 @@ local function drawDisplay()
   lcd.clear()
   gui.drawSelector(1, colorNames[ledColor], menuPosition==1, isItemSelected)
   gui.drawSelector(2, bandNames[vtxBand] .. " " .. tostring(vtxChannel), menuPosition==2, isItemSelected)  
-  text, offset = com.getStatus()
+  text, event = com.getStatus()
   
-  sel = (menuPosition == ITEM_SAVE and (state == IDLE or state == DONE))
-  gui.drawButton(text, 10, sel)
+  sel = (not text) and (menuPosition == ITEM_SAVE)
+  if not text then
+    if event == 1 then
+      state = DONE
+    elseif event == -1 then
+      state = FAIL
+    end
+    if state == DONE then
+      text = "Done"
+    elseif state == FAIL then
+      text = "Failed"
+    else
+      text = "Save"
+    end
+  else 
+    state = BUSY
+  end
+  gui.drawButton(text, sel)
 end
 
 
 local function pressSave()
+  state = BUSY
   config.save(ledColor, vtxBand, vtxChannel)
   com.sendLedVtxConfig(colorIds[ledColor], bandIds[vtxBand], vtxChannel)
 end
@@ -111,21 +129,24 @@ end
 local function run_func(event) 
   
   com.loop()
-
-  if event == EVT_ROT_RIGHT then
-    if isItemSelected then
-      itemIncrease()
-    else
-      menuMoveDown()
+  
+  if state ~= BUSY then
+    if event == EVT_ROT_RIGHT then
+      if isItemSelected then
+        itemIncrease()
+      else
+        menuMoveDown()
+      end
     end
-  end
-  if event == EVT_ROT_LEFT then
-    if isItemSelected then
-      itemDecrease()
-    else
-      menuMoveUp()
-    end
+    if event == EVT_ROT_LEFT then
+      if isItemSelected then
+        itemDecrease()
+      else
+        menuMoveUp()
+      end
+    end  
   end  
+  
   if event == EVT_ENTER_BREAK then
     processEnterPress()
   end
@@ -133,10 +154,9 @@ local function run_func(event)
     com.setDebug()
   end
   if event == EVT_EXIT_BREAK then
-    --state = IDLE
-    --retryCount = 0
+    com.cancel()
   end  
-  if state == DONE and (event == EVT_ROT_LEFT or event == EVT_ROT_RIGHT) then 
+  if ((state == DONE) or (state == FAIL)) and (event == EVT_ROT_LEFT or event == EVT_ROT_RIGHT) then 
     state = IDLE
   end
   
@@ -147,12 +167,7 @@ end
 
 
 local function bg_func()
-  --if getTime() > nextRtcTime then
-  --  nextRtcTime = getTime() + 500
-  --  sendSetRtcCommand()
-  --end
-  --msp.processTxQ()
-  --processMspReply(msp.pollReply())
+  com.bgLoop()
 end
 
 

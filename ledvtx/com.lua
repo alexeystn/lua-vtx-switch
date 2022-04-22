@@ -9,9 +9,11 @@ local isBusy = false
 local retryCount = 0
 local maxRetries = 4
 local retryTimeout = 200
---local currentTime = 0
 local nextTime = 0
---local nextRtcTime = 0
+local nextRtcTime = 0
+
+local successFlag = false
+local failedFlag = false
 
 local commandSequence = {}
 local commandPointer = 0
@@ -38,6 +40,7 @@ local function sendCurrentCommand()
   retryCount = retryCount + 1
   if retryCount > maxRetries then
     isBusy = false
+    failedFlag = true
   end
   if currentCommand.write then
     msp.write(currentCommand.header, currentCommand.payload)
@@ -45,7 +48,7 @@ local function sendCurrentCommand()
     msp.read(currentCommand.header, currentCommand.payload)
   end
   nextTime = getTime() + retryTimeout
-  
+  print(currentCommand.text)
 end
 
 
@@ -56,6 +59,7 @@ local function gotoNextCommand()
     retryCount = 0
     sendCurrentCommand()
   else
+    successFlag = true
     currentCommand = nil
     isBusy = false
   end
@@ -67,7 +71,7 @@ function processMspReply(cmd, rx_buf)
   if (cmd == nil or rx_buf == nil) and not key then
     return
   end
-  if ((cmd == currentCommand.header) or key) and isBusy then
+  if isBusy and (key or (cmd == currentCommand.header)) then
     gotoNextCommand()
   end
 end
@@ -86,7 +90,7 @@ local function prepareLedCommand(color)
   cmd.header = MSP_SET_LED_STRIP
   cmd.payload = { 0, 0, 0, color*4, 0 }
   cmd.write = true
-  cmd.text = "LEDs"
+  cmd.text = "Switching LEDs"
   return cmd
 end
 
@@ -96,7 +100,7 @@ local function prepareVtxCommand(band, channel)
   cmd.header = MSP_VTX_SET_CONFIG
   cmd.payload = { band*8 + channel, 0, 1, 0 }
   cmd.write = true
-  cmd.text = "VTX"
+  cmd.text = "Switching VTX"
   return cmd
 end
 
@@ -139,30 +143,54 @@ end
 
 
 local function getStatus()
-  if isBusy then
+  text = nil
+  flag = 0
+  if isBusy then 
     if currentCommand then
-      return currentCommand.text .. " " .. tostring(retryCount), 10
-    else 
-      return "text", 10
+      text = currentCommand.text .. " (" .. tostring(retryCount) .. ")"
     end
-  else
-    return "Save", 10
   end
+  if successFlag then
+    flag = 1
+    successFlag = false
+  end
+  if failedFlag then
+    flag = -1
+    failedFlag = false
+  end
+  return text, flag
 end
 
 
 function comMainLoop()
-  
   if isBusy then
     currentTime = getTime()
     if currentTime > nextTime then 
       sendCurrentCommand()
     end
   end
-  
   msp.processTxQ()
   processMspReply(msp.pollReply())
 end
 
 
-return { sendLedVtxConfig = sendLedVtxConfig, loop = comMainLoop, getStatus=getStatus, setDebug=setDebugButtonState}
+function cancel()
+  isBusy = false
+  commandPointer = 0
+end
+
+
+function comBgLoop()
+  if getTime() > nextRtcTime then
+    nextRtcTime = getTime() + 500
+    rtcCommand = prepareRtcCommand()
+    msp.write(rtcCommand.header, rtcCommand.payload)
+    print(rtcCommand.text)
+  end
+  msp.processTxQ()
+  processMspReply(msp.pollReply())  
+end
+
+
+return { sendLedVtxConfig = sendLedVtxConfig, loop = comMainLoop, getStatus=getStatus, 
+  cancel=cancel, bgLoop=comBgLoop, setDebug=setDebugButtonState}
