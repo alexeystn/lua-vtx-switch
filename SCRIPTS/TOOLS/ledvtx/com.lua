@@ -98,7 +98,7 @@ end
 local function prepareVtxCommand(band, channel)
   cmd = {}
   cmd.header = MSP_VTX_SET_CONFIG
-  cmd.payload = { band*8 + channel, 0, 1, 0 }
+  cmd.payload = { (band-1)*8 + (channel-1), 0, 1, 0 }
   cmd.write = true
   cmd.text = "Switching VTX"
   return cmd

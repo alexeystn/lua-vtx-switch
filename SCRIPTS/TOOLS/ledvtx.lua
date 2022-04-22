@@ -11,7 +11,7 @@ local colorNames = { "Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Violet
 local colorIds = { 2, 3, 4, 6, 8, 10, 13, 1, 0 }
 
 local bandNames = { "Raceband", "Fatshark", "Lowband" }
-local bandIds = { 5, 4, 7 }
+local bandIds = { 5, 4, 6 }
 
 local ledColor = 1
 local vtxBand = 1
