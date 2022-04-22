@@ -1,5 +1,6 @@
-chdir("/SCRIPTS/TELEMETRY/ledvtx/")
+chdir("/SCRIPTS/TOOLS/LEDVTX")
 
+local toolName = "TNS|LED & VTX setup|TNE"
 
 local gui = assert(loadScript("gui.lua"))()
 local config = assert(loadScript("config.lua"))()
