@@ -9,7 +9,7 @@ local isBusy = false
 local retryCount = 0
 local maxRetries = 4
 local retryTimeout = 200
-local nextTime = 0
+local nextTryTime = 0
 local nextRtcTime = 0
 
 local successFlag = false
@@ -20,19 +20,19 @@ local commandPointer = 0
 local currentCommand = {}
 
 
-local buttonState = false
+local debugButtonState = false
 
-function testKey()
-  if buttonState then
-    buttonState = false
+local function getDebugButtonState()
+  if debugButtonState then
+    debugButtonState = false
     return true
   else 
     return false
   end
 end
 
-function setDebugButtonState()
-  buttonState = true
+local function setDebugButtonState()
+  debugButtonState = true
 end
 
 
@@ -47,7 +47,7 @@ local function sendCurrentCommand()
   else
     msp.read(currentCommand.header, currentCommand.payload)
   end
-  nextTime = getTime() + retryTimeout
+  nextTryTime = getTime() + retryTimeout
   print(currentCommand.text)
 end
 
@@ -67,7 +67,7 @@ end
 
 
 function processMspReply(cmd, rx_buf)
-  local key = testKey()
+  local key = getDebugButtonState()
   if (cmd == nil or rx_buf == nil) and not key then
     return
   end
@@ -86,7 +86,7 @@ end
 
 
 local function prepareLedCommand(color)
-  cmd = {}
+  local cmd = {}
   cmd.header = MSP_SET_LED_STRIP
   cmd.payload = { 0, 0, 0, color*4, 0 }
   cmd.write = true
@@ -96,7 +96,7 @@ end
 
 
 local function prepareVtxCommand(band, channel)
-  cmd = {}
+  local cmd = {}
   cmd.header = MSP_VTX_SET_CONFIG
   cmd.payload = { (band-1)*8 + (channel-1), 0, 1, 0 }
   cmd.write = true
@@ -106,7 +106,7 @@ end
 
 
 local function prepareSaveCommand()
-  cmd = {}
+  local cmd = {}
   cmd.header = MSP_EEPROM_WRITE
   cmd.payload = nil
   cmd.write = false
@@ -143,8 +143,8 @@ end
 
 
 local function getStatus()
-  text = nil
-  flag = 0
+  local text = nil
+  local flag = 0
   if isBusy then 
     if currentCommand then
       text = currentCommand.text .. " (" .. tostring(retryCount) .. ")"
@@ -165,7 +165,7 @@ end
 function comMainLoop()
   if isBusy then
     currentTime = getTime()
-    if currentTime > nextTime then 
+    if currentTime > nextTryTime then 
       sendCurrentCommand()
     end
   end
@@ -176,7 +176,6 @@ end
 
 function cancel()
   isBusy = false
-  commandPointer = 0
 end
 
 
@@ -192,5 +191,5 @@ function comBgLoop()
 end
 
 
-return { sendLedVtxConfig = sendLedVtxConfig, loop = comMainLoop, getStatus=getStatus, 
+return { sendLedVtxConfig = sendLedVtxConfig, mainLoop = comMainLoop, getStatus=getStatus, 
   cancel=cancel, bgLoop=comBgLoop, setDebug=setDebugButtonState}

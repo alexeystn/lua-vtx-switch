@@ -6,7 +6,6 @@ local gui = assert(loadScript("gui.lua"))()
 local config = assert(loadScript("config.lua"))()
 local com = assert(loadScript("com.lua"))()
 
-
 local colorNames = { "Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Violet", "White", "Black" }
 local colorIds = { 2, 3, 4, 6, 8, 10, 13, 1, 0 }
 
@@ -17,16 +16,13 @@ local ledColor = 1
 local vtxBand = 1
 local vtxChannel = 1
 
-
 local menuPosition = 1
 local menuLength = 3
-local isItemSelected = false
-
+local isItemActive = false
 
 local ITEM_LED = 1
 local ITEM_VTX = 2
 local ITEM_SAVE = 3
-
 
 local IDLE=1
 local BUSY=2
@@ -86,10 +82,10 @@ end
 
 local function drawDisplay()
   lcd.clear()
-  gui.drawSelector(1, colorNames[ledColor], menuPosition==1, isItemSelected)
-  gui.drawSelector(2, bandNames[vtxBand] .. " " .. tostring(vtxChannel), menuPosition==2, isItemSelected)  
+  gui.drawSelector(1, colorNames[ledColor], menuPosition==1, isItemActive)
+  gui.drawSelector(2, bandNames[vtxBand] .. " " .. tostring(vtxChannel), menuPosition==2, isItemActive)
+  local text, event
   text, event = com.getStatus()
-  
   sel = (not text) and (menuPosition == ITEM_SAVE)
   if not text then
     if event == 1 then
@@ -111,43 +107,35 @@ local function drawDisplay()
 end
 
 
-local function pressSave()
-  state = BUSY
-  config.save(ledColor, vtxBand, vtxChannel)
-  com.sendLedVtxConfig(colorIds[ledColor], bandIds[vtxBand], vtxChannel)
-end
-
-
 local function processEnterPress()
   if menuPosition < menuLength then
-    isItemSelected = not isItemSelected
+    isItemActive = not isItemActive
   else
-    pressSave()
+    state = BUSY
+    config.save(ledColor, vtxBand, vtxChannel)
+    com.sendLedVtxConfig(colorIds[ledColor], bandIds[vtxBand], vtxChannel)
   end
 end
 
 
 local function run_func(event) 
-  
-  com.loop()
-  
+  com.mainLoop()
   if state ~= BUSY then
     if event == EVT_ROT_RIGHT then
-      if isItemSelected then
+      if isItemActive then
         itemIncrease()
       else
         menuMoveDown()
       end
     end
     if event == EVT_ROT_LEFT then
-      if isItemSelected then
+      if isItemActive then
         itemDecrease()
       else
         menuMoveUp()
       end
     end  
   end  
-  
   if event == EVT_ENTER_BREAK then
     processEnterPress()
   end
@@ -156,13 +144,12 @@ local function run_func(event)
   end
   if event == EVT_EXIT_BREAK then
     com.cancel()
+    state = IDLE
   end  
   if ((state == DONE) or (state == FAIL)) and (event == EVT_ROT_LEFT or event == EVT_ROT_RIGHT) then 
     state = IDLE
   end
-  
   drawDisplay()
-  
   return 0
 end
 
