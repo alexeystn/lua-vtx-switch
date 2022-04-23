@@ -1,12 +1,24 @@
-## Lua VTX Switch
+## Lua LED & VTX Switch
 
-Minimalistic OpenTX Lua script for switching VTX RaceBand channels.
+Minimalistic OpenTX Lua script for switching VTX channels and LED colors.
 
 ![Screenshot](https://github.com/alexeystn/lua-vtx-switch/blob/master/screenshot.png?raw=true)
 
-1) Install [betaflight-tx-lua-scripts](https://github.com/betaflight/betaflight-tx-lua-scripts).
-2) Make sure you have Fatshark band and Raceband configured as Band 4 and Band 5 in your VTX table (usually they are).
-3) Put `vtx.lua` to `SCRIPTS/TELEMETRY` directory of your SD card.
-3) Select `vtx` in [DISPLAY] page of your model setup.
+### Установка скрипта OpenTX
 
-Inspired by [ghostface](https://gist.github.com/ghostface/b7de909b24fc7ce4b4c75de515c0ae46#file-vtx-lua-L1).
+1) Скачать [zip-архив](https://github.com/alexeystn/lua-vtx-switch/archive/refs/heads/master.zip) со скриптами.
+2) Положить содержимое папки `SCRIPTS/TOOLS` из архива в папку `SCRIPTS/TOOLS` на SD-карте аппаратуры.
+3) Запустить скрипт из меню `TOOLS` на аппаратуре.
+
+<details>
+  <summary> <i>Дополнительно</i> </summary>
+  Для быстрого доступа к скрипту на экране телеметрии:
+  
+  4) Положить `ledvtx.lua` из папки `SCRIPTS/TELEMETRY` из архива в папку `SCRIPTS/TELEMETRY` на SD-карте.
+  5) В настройках модели на странице [DISPLAY] выбрать `Script: ledvtx` для любого из экранов.  
+</details>
+
+### Настройка Betaflight
+
+1) Настроить режим светодиодов `set ledstrip_profile = STATUS`
+2) Убедиться, что в VTX-таблице Band Fatshark записан под номером 4, Raceband - под номером 5 (Дополнительно: Lowband 6)
