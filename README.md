@@ -21,4 +21,25 @@ Minimalistic OpenTX Lua script for switching VTX channels and LED colors.
 ### Настройка Betaflight
 
 1) Настроить режим светодиодов `set ledstrip_profile = STATUS`
-2) Убедиться, что в VTX-таблице Band Fatshark записан под номером 4, Raceband - под номером 5 (Дополнительно: Lowband 6)
+
+<details>
+  <summary> <i>Рекомендуемые настройки оттенков светодиодов</i> </summary>
+  
+```
+color 1 30,100,120
+color 2 0,0,240
+color 3 10,0,220
+color 4 30,0,180
+color 5 90,0,180
+color 6 120,0,240
+color 7 150,0,180
+color 8 180,0,120
+color 9 210,0,180
+color 10 240,0,240
+color 11 270,0,180
+color 12 300,0,120
+color 13 330,0,180
+```
+  
+</details>
+
