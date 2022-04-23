@@ -120,6 +120,12 @@ end
 
 local function run_func(event) 
   com.mainLoop()
+  if event == EVT_PLUS_BREAK then
+    event = EVT_ROT_RIGHT
+  end
+  if event == EVT_MINUS_BREAK then
+    event = EVT_ROT_LEFT
+  end    
   if state ~= BUSY then
     if event == EVT_ROT_RIGHT then
       if isItemActive then
