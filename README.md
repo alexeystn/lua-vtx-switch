@@ -1,21 +1,21 @@
 ## Lua LED & VTX Switch
 
-Minimalistic OpenTX Lua script for switching VTX channels and LED colors.
+Скрипт для переключения каналов видеопередатчика и цвета светодиодов с экрана аппаратуры.
 
 ![Screenshot](https://github.com/alexeystn/lua-vtx-switch/blob/master/screenshot.png?raw=true)
 
 ### Установка скрипта OpenTX
 
-1) Скачать [zip-архив](https://github.com/alexeystn/lua-vtx-switch/archive/refs/heads/master.zip) со скриптами.
-2) Положить содержимое папки `SCRIPTS/TOOLS` из архива в папку `SCRIPTS/TOOLS` на SD-карте аппаратуры.
-3) Запустить скрипт из меню `TOOLS` на аппаратуре.
+1) Скачать [zip-архив](https://github.com/alexeystn/lua-vtx-switch/archive/refs/heads/master.zip) и распаковать.
+2) Скопировать содержимое папки `SCRIPTS/TOOLS` из архива в папку `SCRIPTS/TOOLS` на SD карте.
+3) На аппаратуре открыть меню `TOOLS` (долгим нажатием кнопки `Menu`) и выбрать `LED & VTX setup`
 
 <details>
   <summary> <i>Дополнительно</i> </summary>
-  Для быстрого доступа к скрипту на экране телеметрии:
+  Для быстрого доступа к скрипту на экране телеметрии (не обязательно):
   
-  4) Положить `ledvtx.lua` из папки `SCRIPTS/TELEMETRY` из архива в папку `SCRIPTS/TELEMETRY` на SD-карте.
-  5) В настройках модели на странице [DISPLAY] выбрать `Script: ledvtx` для любого из экранов.  
+  1) Положить `ledvtx.lua` из папки `SCRIPTS/TELEMETRY` из архива в папку `SCRIPTS/TELEMETRY` на SD-карте.
+  2) В настройках модели на странице `DISPLAY` выбрать `Script: ledvtx` для любого из экранов.  
 </details>
 
 ### Настройка Betaflight
@@ -23,7 +23,7 @@ Minimalistic OpenTX Lua script for switching VTX channels and LED colors.
 1) Настроить режим светодиодов `set ledstrip_profile = STATUS`
 
 <details>
-  <summary> <i>Рекомендуемые настройки оттенков светодиодов</i> </summary>
+  <summary> <i>Рекомендуемые оттенки</i> </summary>
   
 ```
 color 1 30,100,120
@@ -42,4 +42,3 @@ color 13 330,0,180
 ```
   
 </details>
-
