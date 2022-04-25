@@ -5,6 +5,7 @@ local toolName = "TNS|LED & VTX setup|TNE"
 local gui = assert(loadScript("gui.lua"))()
 local config = assert(loadScript("config.lua"))()
 local com = assert(loadScript("com.lua"))()
+assert(loadScript("ledcount.lua"))()
 
 local colorNames = { "Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Violet", "White", "Black" }
 local colorIds = { 2, 3, 4, 6, 8, 10, 13, 1, 0 }
@@ -113,7 +114,7 @@ local function processEnterPress()
   else
     state = BUSY
     config.save(ledColor, vtxBand, vtxChannel)
-    com.sendLedVtxConfig(colorIds[ledColor], bandIds[vtxBand], vtxChannel)
+    com.sendLedVtxConfig(colorIds[ledColor], bandIds[vtxBand], vtxChannel, ledCount)
   end
 end
 

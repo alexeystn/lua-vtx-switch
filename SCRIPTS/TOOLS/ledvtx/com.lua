@@ -85,12 +85,12 @@ local function startTransmission(commands)
 end
 
 
-local function prepareLedCommand(color)
+local function prepareLedCommand(color, n)
   local cmd = {}
   cmd.header = MSP_SET_LED_STRIP
-  cmd.payload = { 0, 0, 0, color*4, 0 }
+  cmd.payload = { n, n, 0, color*4, 0 }
   cmd.write = true
-  cmd.text = "Switching LEDs"
+  cmd.text = "Switching LED " .. tostring(n)
   return cmd
 end
 
@@ -133,12 +133,15 @@ local function prepareRtcCommand()
 end
 
 
-local function sendLedVtxConfig(color, band, channel)  
+local function sendLedVtxConfig(color, band, channel, count)  
   retryCount = 0
-  ledCommand = prepareLedCommand(color)
-  vtxCommand = prepareVtxCommand(band, channel)
-  saveCommand = prepareSaveCommand()
-  startTransmission({ledCommand, vtxCommand , saveCommand})
+  local cmd = {}
+  cmd[#cmd+1] = prepareVtxCommand(band, channel)
+  for i = 1, count do
+    cmd[#cmd+1] = prepareLedCommand(color, i)
+  end
+  cmd[#cmd+1] = prepareSaveCommand()
+  startTransmission(cmd)
 end  
 
 
