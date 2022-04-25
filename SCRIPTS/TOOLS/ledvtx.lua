@@ -121,28 +121,29 @@ end
 
 local function run_func(event) 
   com.mainLoop()
-  if event == EVT_PLUS_BREAK then
-    event = EVT_ROT_RIGHT
-  end
-  if event == EVT_MINUS_BREAK then
-    event = EVT_ROT_LEFT
-  end    
   if state ~= BUSY then
-    if event == EVT_ROT_RIGHT then
-      if isItemActive then
+    if isItemActive then
+      if event == EVT_ROT_RIGHT or event == EVT_PLUS_FIRST or event == EVT_PLUS_REPT then
         itemIncrease()
-      else
+      end
+      if event == EVT_ROT_LEFT or event == EVT_MINUS_FIRST or event == EVT_MINUS_REPT then
+        itemDecrease()
+      end
+      if event == EVT_EXIT_BREAK then
+        isItemActive = false
+      end
+    else 
+      if event == EVT_ROT_RIGHT or event == EVT_MINUS_FIRST or event == EVT_MINUS_REPT then
         menuMoveDown()
       end
-    end
-    if event == EVT_ROT_LEFT then
-      if isItemActive then
-        itemDecrease()
-      else
+      if event == EVT_ROT_LEFT or event == EVT_PLUS_FIRST or event == EVT_PLUS_REPT then
         menuMoveUp()
       end
-    end  
-  end  
+      if event == EVT_EXIT_BREAK then
+        return -1
+      end
+    end
+  end
   if event == EVT_ENTER_BREAK then
     processEnterPress()
   end
