@@ -88,7 +88,7 @@ end
 local function prepareLedCommand(color, n)
   local cmd = {}
   cmd.header = MSP_SET_LED_STRIP
-  cmd.payload = { n, n, 0, color*4, 0 }
+  cmd.payload = { n-1, (n-1)*16, 0, color*4, 0 }
   cmd.write = true
   cmd.text = "Switching LED " .. tostring(n)
   return cmd
