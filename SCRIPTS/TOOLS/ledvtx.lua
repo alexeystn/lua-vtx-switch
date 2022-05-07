@@ -7,8 +7,8 @@ local config = assert(loadScript("config.lua"))()
 local com = assert(loadScript("com.lua"))()
 assert(loadScript("ledcount.lua"))()
 
-local colorNames = { "Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Violet", "White", "Black" }
-local colorIds = { 2, 3, 4, 6, 8, 10, 13, 1, 0 }
+local colorNames = { "Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Violet", "White", "Black", "   * * * *" }
+local colorIds = { 2, 3, 4, 6, 8, 10, 13, 1, 0, nil }
 
 local bandNames = { "Raceband", "Fatshark", "Lowband" }
 local bandIds = { 5, 4, 6 }
