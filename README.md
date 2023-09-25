@@ -2,7 +2,7 @@
 
 Скрипт для переключения каналов видеопередатчика и цвета светодиодов с экрана аппаратуры.
 
-![Screenshot](https://github.com/alexeystn/lua-vtx-switch/blob/master/screenshot.png?raw=true)
+<img src="screenshot.png" height="128" />  <img src="screenshot_color.png" height="128" />
 
 ### Установка скрипта OpenTX
 
