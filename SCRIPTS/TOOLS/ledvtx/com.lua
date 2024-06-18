@@ -136,7 +136,9 @@ end
 local function sendLedVtxConfig(color, band, channel, count)  
   retryCount = 0
   local cmd = {}
-  cmd[#cmd+1] = prepareVtxCommand(band, channel)
+  if band then
+    cmd[#cmd+1] = prepareVtxCommand(band, channel)
+  end
   if color then
     for i = 1, count do
       cmd[#cmd+1] = prepareLedCommand(color, i)
