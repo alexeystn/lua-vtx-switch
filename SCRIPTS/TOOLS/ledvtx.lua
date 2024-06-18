@@ -94,6 +94,8 @@ local function drawDisplay()
   end
   local text, event
   text, event = com.getStatus()
+  api, power = com.getFcInfo()
+  gui.drawInfo(api, power)
   sel = (not text) and (menuPosition == ITEM_SAVE)
   if not text then
     if event == 1 then

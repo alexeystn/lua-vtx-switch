@@ -54,4 +54,9 @@ local function drawButton(text, isSelected)
 end
 
 
-return { drawSelector = drawSelector, drawButton = drawButton }
+local function drawInfo(field1, field2)
+  lcd.drawText(0, 0, tostring(field1) .. "," .. tostring(field2), SMLSIZE) 
+end
+
+
+return { drawSelector = drawSelector, drawButton = drawButton, drawInfo = drawInfo }

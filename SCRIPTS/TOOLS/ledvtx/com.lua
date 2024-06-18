@@ -1,5 +1,7 @@
 local msp = assert(loadScript("msp.lua"))()
 
+local MSP_API_VERSION = 1
+local MSP_VTX_CONFIG = 88
 local MSP_VTX_SET_CONFIG = 89
 local MSP_EEPROM_WRITE = 250
 local MSP_SET_LED_STRIP = 49
@@ -19,6 +21,8 @@ local commandSequence = {}
 local commandPointer = 0
 local currentCommand = {}
 
+local fcCurrentApi = 0
+local fcCurrentVtxPower = 0
 
 local debugButtonState = false
 
@@ -70,6 +74,12 @@ function processMspReply(cmd, rx_buf)
   local key = getDebugButtonState()
   if (cmd == nil or rx_buf == nil) and not key then
     return
+  end
+  if cmd == MSP_API_VERSION then
+    fcCurrentApi = rx_buf[3]
+  end
+  if cmd == MSP_VTX_CONFIG then
+    fcCurrentVtxPower = rx_buf[4]
   end
   if isBusy and (key or (cmd == currentCommand.header)) then
     gotoNextCommand()
@@ -133,9 +143,31 @@ local function prepareRtcCommand()
 end
 
 
+local function prepareReadVersionCommand()
+  local cmd = {}
+  cmd.header = MSP_API_VERSION
+  cmd.payload = nil
+  cmd.write = false
+  cmd.text = "Connecting"
+  return cmd
+end
+
+
+local function prepareReadVtxCommand()
+  local cmd = {}
+  cmd.header = MSP_VTX_CONFIG
+  cmd.payload = nil
+  cmd.write = false
+  cmd.text = "Reading VTX"
+  return cmd
+end
+
+
 local function sendLedVtxConfig(color, band, channel, count)  
   retryCount = 0
   local cmd = {}
+  cmd[#cmd+1] = prepareReadVersionCommand()
+  cmd[#cmd+1] = prepareReadVtxCommand()
   if band then
     cmd[#cmd+1] = prepareVtxCommand(band, channel)
   end
@@ -169,6 +201,11 @@ local function getStatus()
 end
 
 
+local function getFcInfo()
+    return fcCurrentApi, fcCurrentVtxPower
+end
+
+
 function comMainLoop()
   if isBusy then
     currentTime = getTime()
@@ -199,4 +236,4 @@ end
 
 
 return { sendLedVtxConfig = sendLedVtxConfig, mainLoop = comMainLoop, getStatus=getStatus, 
-  cancel=cancel, bgLoop=comBgLoop, setDebug=setDebugButtonState}
+  cancel=cancel, bgLoop=comBgLoop, setDebug=setDebugButtonState, getFcInfo=getFcInfo}
