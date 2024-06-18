@@ -26,6 +26,12 @@ local fcCurrentVtxPower = 0
 
 local debugButtonState = false
 
+local newBand = 0
+local newChannel = 0
+local newColor = 0
+local newCount = 0
+
+
 local function getDebugButtonState()
   if debugButtonState then
     debugButtonState = false
@@ -70,35 +76,14 @@ local function gotoNextCommand()
 end
 
 
-function processMspReply(cmd, rx_buf)
-  local key = getDebugButtonState()
-  if (cmd == nil or rx_buf == nil) and not key then
-    return
-  end
-  if cmd == MSP_API_VERSION then
-    fcCurrentApi = rx_buf[3]
-  end
-  if cmd == MSP_VTX_CONFIG then
-    fcCurrentVtxPower = rx_buf[4]
-  end
-  if isBusy and (key or (cmd == currentCommand.header)) then
-    gotoNextCommand()
-  end
-end
-
-
-local function startTransmission(commands) 
-  commandSequence = commands
-  commandPointer = 0
-  isBusy = true
-  gotoNextCommand()
-end
-
-
 local function prepareLedCommand(color, n)
   local cmd = {}
   cmd.header = MSP_SET_LED_STRIP
-  cmd.payload = { n-1, (n-1)*16, 0, color*4, 0 }
+  if fcCurrentApi < 46 then
+    cmd.payload = { n-1, (n-1)*16, 0, color*4, 0 }
+  else 
+    cmd.payload = { n-1, (n-1)*16, 0, bit32.lshift(bit32.band(color, 0x03), 6), bit32.rshift(color, 2)}
+  end
   cmd.write = true
   cmd.text = "Switching LED " .. tostring(n)
   return cmd
@@ -108,7 +93,7 @@ end
 local function prepareVtxCommand(band, channel)
   local cmd = {}
   cmd.header = MSP_VTX_SET_CONFIG
-  cmd.payload = { (band-1)*8 + (channel-1), 0, 1, 0 }
+  cmd.payload = { (band-1)*8 + (channel-1), 0, fcCurrentVtxPower, 0 }
   cmd.write = true
   cmd.text = "Switching VTX"
   return cmd
@@ -122,6 +107,45 @@ local function prepareSaveCommand()
   cmd.write = false
   cmd.text = "Saving"
   return cmd
+end
+
+
+local function enqueueLedVtxCommand(cmd)
+  if newColor then
+    for i = 1, newCount do
+      cmd[#cmd+1] = prepareLedCommand(newColor, i)
+    end
+  end
+  if newBand then
+    cmd[#cmd+1] = prepareVtxCommand(newBand, newChannel)
+  end
+  cmd[#cmd+1] = prepareSaveCommand()
+end
+
+
+function processMspReply(cmd, rx_buf)
+  local key = getDebugButtonState()
+  if (cmd == nil or rx_buf == nil) and not key then
+    return
+  end
+  if cmd == MSP_API_VERSION then
+    fcCurrentApi = rx_buf[3]
+  end
+  if cmd == MSP_VTX_CONFIG then
+    fcCurrentVtxPower = rx_buf[4]
+    enqueueLedVtxCommand(commandSequence)
+  end
+  if isBusy and (key or (cmd == currentCommand.header)) then
+    gotoNextCommand()
+  end
+end
+
+
+local function startTransmission(commands) 
+  commandSequence = commands
+  commandPointer = 0
+  isBusy = true
+  gotoNextCommand()
 end
 
 
@@ -166,17 +190,15 @@ end
 local function sendLedVtxConfig(color, band, channel, count)  
   retryCount = 0
   local cmd = {}
+  
   cmd[#cmd+1] = prepareReadVersionCommand()
   cmd[#cmd+1] = prepareReadVtxCommand()
-  if band then
-    cmd[#cmd+1] = prepareVtxCommand(band, channel)
-  end
-  if color then
-    for i = 1, count do
-      cmd[#cmd+1] = prepareLedCommand(color, i)
-    end
-  end
-  cmd[#cmd+1] = prepareSaveCommand()
+  
+  newBand = band
+  newChannel = channel
+  newColor = color
+  newCount = count
+  
   startTransmission(cmd)
 end  
 
