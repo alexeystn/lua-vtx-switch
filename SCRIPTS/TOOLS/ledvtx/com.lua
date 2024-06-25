@@ -19,6 +19,7 @@ local commandSequence = {}
 local commandPointer = 0
 local currentCommand = {}
 
+local mspApiVersion = 45  -- BF 4.4: 45,  BF 4.5: 46
 
 local debugButtonState = false
 
@@ -88,7 +89,11 @@ end
 local function prepareLedCommand(color, n)
   local cmd = {}
   cmd.header = MSP_SET_LED_STRIP
-  cmd.payload = { n-1, (n-1)*16, 0, color*4, 0 }
+  if mspApiVersion < 46 then
+    cmd.payload = { n-1, (n-1)*16, 0, color*4, 0 }
+  else 
+    cmd.payload = { n-1, (n-1)*16, 0, bit32.lshift(bit32.band(color, 0x03), 6), bit32.rshift(color, 2)}
+  end
   cmd.write = true
   cmd.text = "Switching LED " .. tostring(n)
   return cmd
