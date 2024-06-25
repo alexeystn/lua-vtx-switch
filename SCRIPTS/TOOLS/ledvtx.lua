@@ -105,6 +105,7 @@ local function drawDisplay()
     state = BUSY
   end
   gui.drawButton(text, sel)
+  gui.drawStatus()
 end
 
 

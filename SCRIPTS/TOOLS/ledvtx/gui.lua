@@ -53,5 +53,13 @@ local function drawButton(text, isSelected)
   lcd.drawText(LCD_C-offset, 48+122*w, text, flags) 
 end
 
+local function drawStatus()
+  if getRSSI() > 0 then
+    for i = 0, 3 do
+      x = LCD_W - 7 + i*2
+      lcd.drawLine(x, 7, x, 7 - i*2, SOLID, 0)
+    end
+  end
+end
 
-return { drawSelector = drawSelector, drawButton = drawButton }
+return { drawSelector = drawSelector, drawButton = drawButton, drawStatus = drawStatus }
