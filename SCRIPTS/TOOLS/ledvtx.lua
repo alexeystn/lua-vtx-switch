@@ -10,8 +10,8 @@ assert(loadScript("ledcount.lua"))()
 local colorNames = { "Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Violet", "White", "Black", "   * * * *" }
 local colorIds = { 2, 3, 4, 6, 8, 10, 13, 1, 0, nil }
 
-local bandNames = { "Raceband", "Fatshark", "Lowband" }
-local bandIds = { 5, 4, 6 }
+local bandNames = { "Raceband", "Fatshark", "Lowband", "   * * * *" }
+local bandIds = { 5, 4, 6, nil }
 
 local ledColor = 1
 local vtxBand = 1
@@ -44,6 +44,9 @@ local function itemIncrease()
       vtxChannel = vtxChannel + 1
     elseif vtxBand < #bandNames then
       vtxBand = vtxBand + 1
+      vtxChannel = 1
+    end
+    if bandIds[vtxBand] == nil then
       vtxChannel = 1
     end
   end
@@ -84,7 +87,11 @@ end
 local function drawDisplay()
   lcd.clear()
   gui.drawSelector(1, colorNames[ledColor], menuPosition==1, isItemActive)
-  gui.drawSelector(2, bandNames[vtxBand] .. " " .. tostring(vtxChannel), menuPosition==2, isItemActive)
+  if bandIds[vtxBand] then
+    gui.drawSelector(2, bandNames[vtxBand] .. " " .. tostring(vtxChannel), menuPosition==2, isItemActive)
+  else 
+    gui.drawSelector(2, bandNames[vtxBand], menuPosition==2, isItemActive)
+  end
   local text, event
   text, event = com.getStatus()
   sel = (not text) and (menuPosition == ITEM_SAVE)

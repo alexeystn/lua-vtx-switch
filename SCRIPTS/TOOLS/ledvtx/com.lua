@@ -19,7 +19,7 @@ local commandSequence = {}
 local commandPointer = 0
 local currentCommand = {}
 
-local mspApiVersion = 45  -- BF 4.4: 45,  BF 4.5: 46
+local mspApiVersion = 46  -- BF 4.4: 45,  BF 4.5: 46
 
 local debugButtonState = false
 
@@ -141,7 +141,9 @@ end
 local function sendLedVtxConfig(color, band, channel, count)  
   retryCount = 0
   local cmd = {}
-  cmd[#cmd+1] = prepareVtxCommand(band, channel)
+  if band then
+    cmd[#cmd+1] = prepareVtxCommand(band, channel)
+  end
   if color then
     for i = 1, count do
       cmd[#cmd+1] = prepareLedCommand(color, i)
