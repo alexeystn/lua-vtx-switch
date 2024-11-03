@@ -19,8 +19,6 @@ local commandSequence = {}
 local commandPointer = 0
 local currentCommand = {}
 
-local mspApiVersion = 46  -- BF 4.4: 45,  BF 4.5: 46
-
 local debugButtonState = false
 
 local function getDebugButtonState()
@@ -86,10 +84,10 @@ local function startTransmission(commands)
 end
 
 
-local function prepareLedCommand(color, n)
+local function prepareLedCommand(color, n, version)
   local cmd = {}
   cmd.header = MSP_SET_LED_STRIP
-  if mspApiVersion < 46 then
+  if version < 46 then
     cmd.payload = { n-1, (n-1)*16, 0, color*4, 0 }
   else 
     cmd.payload = { n-1, (n-1)*16, 0, bit32.lshift(bit32.band(color, 0x03), 6), bit32.rshift(color, 2)}
@@ -138,7 +136,7 @@ local function prepareRtcCommand()
 end
 
 
-local function sendLedVtxConfig(color, band, channel, count)  
+local function sendLedVtxConfig(color, band, channel, count, version)  
   retryCount = 0
   local cmd = {}
   if band then
@@ -146,7 +144,7 @@ local function sendLedVtxConfig(color, band, channel, count)
   end
   if color then
     for i = 1, count do
-      cmd[#cmd+1] = prepareLedCommand(color, i)
+      cmd[#cmd+1] = prepareLedCommand(color, i, version)
     end
   end
   cmd[#cmd+1] = prepareSaveCommand()

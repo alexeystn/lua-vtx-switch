@@ -5,7 +5,9 @@ local toolName = "TNS|LED & VTX setup|TNE"
 local gui = assert(loadScript("gui.lua"))()
 local config = assert(loadScript("config.lua"))()
 local com = assert(loadScript("com.lua"))()
-assert(loadScript("ledcount.lua"))()
+
+local ledCount = 1   -- Default: 1.
+local mspApiVersion = 46  -- Default: 46. Set 45 if using BF4.4 or earlier.
 
 local colorNames = { "Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Violet", "White", "Black", "   * * * *" }
 local colorIds = { 2, 3, 4, 6, 8, 10, 13, 1, 0, nil }
@@ -122,7 +124,7 @@ local function processEnterPress()
   else
     state = BUSY
     config.save(ledColor, vtxBand, vtxChannel)
-    com.sendLedVtxConfig(colorIds[ledColor], bandIds[vtxBand], vtxChannel, ledCount)
+    com.sendLedVtxConfig(colorIds[ledColor], bandIds[vtxBand], vtxChannel, ledCount, mspApiVersion)
   end
 end
 
