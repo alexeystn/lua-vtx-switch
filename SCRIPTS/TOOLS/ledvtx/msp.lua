@@ -172,8 +172,38 @@ function mspPoll()
             return mspReceivedReply(mspData)
         end
     end
+    if command == 0x2B then    
+      processElrsReply(data)
+    end
     return nil
 end
 
 
-return { processTxQ = mspProcessTxQ, pollReply = mspPollReply, write = mspWrite, read = mspRead }
+
+
+local elrsIds = { 0, 0, 0 }
+
+function getElrsIds()
+  return elrsIds
+end
+
+function processElrsReply(data)
+  char1 = string.char(data[7])
+  char2 = string.char(data[8])
+  fieldId = data[3]
+  if char1 == 'B' and char2 == 'a' then
+    elrsIds[1] = fieldId
+  end
+  if char1 == 'C' and char2 == 'h' then
+    elrsIds[2] = fieldId
+  end
+  if char1 == 'P' and char2 == 'w' then
+    elrsIds[3] = fieldId
+  end
+  --  elrsFieldCounter = elrsFieldCounter + 1
+  -- elrsIsBusy = 0
+end
+
+
+
+return { processTxQ = mspProcessTxQ, pollReply = mspPollReply, write = mspWrite, read = mspRead, getElrsIds = getElrsIds }

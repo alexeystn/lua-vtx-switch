@@ -34,6 +34,25 @@ local FAIL=4
 
 local state = IDLE
 
+local elrsStatus = 0
+
+local elrsFieldCounter = 1
+local elrsIsBusy = 0
+local elrsRetryTime = 0
+
+local function elrsRequest()
+  elrsIds = com.getElrsIds()
+  if elrsIsBusy == 0 and elrsFieldCounter < 20 then
+    crossfireTelemetryPush(0x2C, {0xEE, 0xEF, elrsFieldCounter, 0 })
+    elrsIsBusy = 1
+    elrsRetryTime = getTime() + 20
+  end
+  if getTime() > elrsRetryTime and elrsFieldCounter < 20 then
+    elrsIsBusy = 0
+    elrsFieldCounter = elrsFieldCounter + 1
+  end
+end
+
 
 local function itemIncrease()
   if menuPosition == ITEM_LED then 
@@ -113,6 +132,7 @@ local function drawDisplay()
   else 
     state = BUSY
   end
+  lcd.drawText(0, 50, tostring(elrsIds[1]) .. "," .. tostring(elrsIds[2]) .. "," .. tostring(elrsIds[3]))
   gui.drawButton(text, sel)
   gui.drawStatus()
 end
@@ -167,6 +187,7 @@ local function run_func(event)
   if ((state == DONE) or (state == FAIL)) and (event == EVT_ROT_LEFT or event == EVT_ROT_RIGHT) then 
     state = IDLE
   end
+  elrsRequest()
   drawDisplay()
   return 0
 end

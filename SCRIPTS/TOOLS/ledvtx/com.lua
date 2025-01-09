@@ -204,4 +204,4 @@ end
 
 
 return { sendLedVtxConfig = sendLedVtxConfig, mainLoop = comMainLoop, getStatus=getStatus, 
-  cancel=cancel, bgLoop=comBgLoop, setDebug=setDebugButtonState}
+  cancel=cancel, bgLoop=comBgLoop, setDebug=setDebugButtonState, getElrsIds=msp.getElrsIds }
