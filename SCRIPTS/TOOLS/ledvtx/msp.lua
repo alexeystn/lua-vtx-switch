@@ -25,6 +25,7 @@ local maxTxBufferSize = 8
 local maxRxBufferSize = 58
 
 function mspProcessTxQ()
+    makeElrsRequest()
     if (#(mspTxBuf) == 0) then
         return false
     end
@@ -181,11 +182,19 @@ end
 
 
 
-local elrsIds = { 0, 0, 0 }
+local elrsIds = { 0, 0, 0, 0 }
+
+local elrsFieldCounter = 1
+local elrsIsBusy = 0
+local elrsRetryTime = 0
+
+local elrsStarted = 0
 
 function getElrsIds()
+  elrsStarted = 1
   return elrsIds
 end
+
 
 function processElrsReply(data)
   char1 = string.char(data[7])
@@ -193,6 +202,7 @@ function processElrsReply(data)
   fieldId = data[3]
   if char1 == 'B' and char2 == 'a' then
     elrsIds[1] = fieldId
+    crossfireTelemetryPush(0x2D, {0xEE, 0xEF, fieldId, 0 }) -- disable Admin
   end
   if char1 == 'C' and char2 == 'h' then
     elrsIds[2] = fieldId
@@ -200,8 +210,27 @@ function processElrsReply(data)
   if char1 == 'P' and char2 == 'w' then
     elrsIds[3] = fieldId
   end
-  --  elrsFieldCounter = elrsFieldCounter + 1
-  -- elrsIsBusy = 0
+  if char1 == 'S' and char2 == 'e' then
+    elrsIds[4] = fieldId
+  end  
+  elrsFieldCounter = elrsFieldCounter + 1
+  elrsIsBusy = 0
+end
+
+
+function makeElrsRequest()
+  if elrsStarted == 0 then
+    return
+  end
+  if elrsIsBusy == 0 and elrsFieldCounter < 20 then
+    crossfireTelemetryPush(0x2C, {0xEE, 0xEF, elrsFieldCounter, 0 })
+    elrsIsBusy = 1
+    elrsRetryTime = getTime() + 20
+  end
+  if getTime() > elrsRetryTime and elrsFieldCounter < 20 then
+    elrsIsBusy = 0
+    elrsFieldCounter = elrsFieldCounter + 1
+  end
 end
 
 

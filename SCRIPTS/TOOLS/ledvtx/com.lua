@@ -142,7 +142,20 @@ local function sendLedVtxConfig(color, band, channel, count, version)
   retryCount = 0
   local cmd = {}
   if band then
-    cmd[#cmd+1] = prepareVtxCommand(band, channel)
+  
+    if 1 then  -- use MSP:
+      cmd[#cmd+1] = prepareVtxCommand(band, channel)
+    else -- use Backpack
+      local elrsIds = msp.getElrsIds()
+      if elrsIds[1] ~= 0 and elrsIds[2] ~= 0 and elrsIds[3] ~= 0  and elrsIds[4] ~= 0 then
+        crossfireTelemetryPush(0x2D, {0xEE, 0xEF, elrsIds[1], band})
+        crossfireTelemetryPush(0x2D, {0xEE, 0xEF, elrsIds[2], channel-1 })
+        crossfireTelemetryPush(0x2D, {0xEE, 0xEF, elrsIds[3], 1 })
+        crossfireTelemetryPush(0x2D, {0xEE, 0xEF, elrsIds[4], 1 })
+      end
+    end
+  
+  
   end
   if color then
     for i = 1, count do
