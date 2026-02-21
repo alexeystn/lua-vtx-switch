@@ -57,13 +57,12 @@ for iBand = 1, 3 do
   end
 end
 channelLabels[#channelLabels+1] = "   * * * *"
-channelIds[#channelIds+1] = nil
+channelIds[#channelIds+1] = {nil, nil}
 
 menu = {}
 
 menu[ITEM_LED] = {labels = colorLabels, values = colorIds, pos = 1}
 menu[ITEM_VTX] = {labels = channelLabels, values = channelIds, pos = 1}
-
 menu[ITEM_POWER] = {labels = powerLabels, values = powerIds, pos = 1}
 menu[ITEM_COUNT] = {labels = countLabels, values = countIds, pos = 1}
 menu[ITEM_LARSON] = {labels = switchLabels, values = switchIds, pos = 1}
@@ -159,6 +158,16 @@ local function processEnterPress()
     state = BUSY
     state = DONE -- TODO: remove this line
     config.save(menu)
+    
+    args = {
+      color = menu[ITEM_LED].values[menu[ITEM_LED].pos],
+      band = menu[ITEM_VTX].values[menu[ITEM_VTX].pos][0],
+      channel = menu[ITEM_VTX].values[menu[ITEM_VTX].pos][1],
+      power = menu[ITEM_POWER].values[menu[ITEM_POWER].pos],
+      count = menu[ITEM_COUNT].values[menu[ITEM_COUNT].pos],
+      larson = menu[ITEM_LARSON].values[menu[ITEM_LARSON].pos],
+      version = menu[ITEM_VERSION].values[menu[ITEM_VERSION].pos]
+    }
     --com.sendLedVtxConfig(colorIds[ledColor], bandIds[vtxBand], vtxChannel, ledCount, mspApiVersion)  -- TODO: transfer all parameters
   end
 end
@@ -213,30 +222,12 @@ end
 
 
 local function bg_func()
-  com.bgLoop()
+  --com.bgLoop()
 end
 
 
 local function init_func()
-
-  limits = {}
-  for i = 1, 10 do
-    if menu[i] then
-      limits[#limits+1] = #menu[i].labels
-    end
-  end
-
-  positions = config.load_(limits)
-  for i = 1, #positions do
-    print(positions[i])
-  end
-  p = 1
-  for i = 1, 10 do
-    if menu[i] then
-      menu[i].pos = positions[p]
-      p = p+1
-    end
-  end
+  config.load_(menu)  
 end
 
 

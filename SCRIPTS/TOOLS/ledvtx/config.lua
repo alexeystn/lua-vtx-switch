@@ -14,29 +14,43 @@ local function checkLimits(value, maxValue)
 end
 
 
-local function loadConfig(limits)
-
-  local f = io.open(configPath, "r")
-  local result = {}
-  if f then
-    for i = 1, #limits do 
-      val = tonumber(io.read(f, 2))
-      io.read(f, 1)
-      val = checkLimits(val, limits[i])
-      result[#result+1] = val
-    end
-  else
-    for i = 1, #limits do 
-      result[#result+1] = 1
+local function getMenuLength(menu)
+  local result = 0
+  for k, v in pairs(menu) do
+    if k > result then
+      result = k
     end
   end
+  print(result)
   return result
 end
 
 
+local function loadConfig(menu)
+  local menuLength = getMenuLength(menu)
+  local f = io.open(configPath, "r")
+  if f then
+    for i = 1, menuLength do
+      if menu[i] then
+        val = tonumber(io.read(f, 2))
+        io.read(f, 1)
+        menu[i].pos = checkLimits(val, #menu[i].labels)
+      end
+    end
+  else
+    for i = 1, menuLength do
+      if menu[i] then
+        menu[i].pos = 1
+      end
+    end
+  end
+end
+
+
 local function saveConfig(menu)
+  local menuLength = getMenuLength(menu)
   local f = io.open(configPath, "w")
-  for i = 1, 10 do  -- TODO: check max menu id
+  for i = 1, menuLength do  
     if menu[i] then
       io.write(f, string.format("%2d ", menu[i].pos))
     end
