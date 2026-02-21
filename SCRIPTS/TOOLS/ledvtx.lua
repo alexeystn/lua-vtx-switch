@@ -16,75 +16,80 @@ local ITEM_COUNT = 6
 local ITEM_LARSON = 7
 local ITEM_VERSION = 8
 
-
 local IDLE=1
 local BUSY=2
 local DONE=3
 local FAIL=4
 
 
-local ledCount = 1   -- Default: 1.
-local mspApiVersion = 46  -- Default: 46. Set 45 if using BF4.4 or earlier.
-
-local colorNames = { "Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Violet", "White", "Black", "   * * * *" }
+local colorLabels = { "Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Violet", "White", "Black", "   * * * *" }
 local colorIds = { 2, 3, 4, 6, 8, 10, 13, 1, 0, nil }
 
-local bandNames = { "Raceband", "Fatshark", "Lowband", "   * * * *" }
-local bandIds = { 5, 4, 6, nil }
+local bandNames = { "Raceband", "Fatshark", "Lowband"}
+local bandIds = { 5, 4, 6 }
 
-local ledColor = 1
-local vtxBand = 1
-local vtxChannel = 1
+local switchLabels = {"OFF", "ON"}
+local switchIds = {0, 1}
+
+local versionLabels = {" 4.4", " 4.5", " 4.6"}
+local versionIds = {44, 45, 46}
+
+local powerLabels = {}
+local powerIds = {}
+for i = 0, 4 do
+  powerLabels[#powerLabels+1] = tostring(i)
+  powerIds[#powerIds+1] = i
+end
+
+local countLabels = {}
+local countIds = {}
+for i = 1, 10 do
+  countLabels[#countLabels+1] = tostring(i)
+  countIds[#countIds+1] = i
+end
+
+local channelLabels = {}
+local channelIds = {}
+for iBand = 1, 3 do
+  for iCh = 1, 8 do
+    channelLabels[#channelLabels+1] = bandNames[iBand] .. " " .. tostring(iCh)
+    channelIds[#channelIds+1] = {bandIds[iBand], iCh}
+  end
+end
+channelLabels[#channelLabels+1] = "   * * * *"
+channelIds[#channelIds+1] = nil
+
+menu = {}
+
+menu[ITEM_LED] = {labels = colorLabels, values = colorIds, pos = 1}
+menu[ITEM_VTX] = {labels = channelLabels, values = channelIds, pos = 1}
+
+menu[ITEM_POWER] = {labels = powerLabels, values = powerIds, pos = 1}
+menu[ITEM_COUNT] = {labels = countLabels, values = countIds, pos = 1}
+menu[ITEM_LARSON] = {labels = switchLabels, values = switchIds, pos = 1}
+menu[ITEM_VERSION] = {labels = versionLabels, values = versionIds, pos = 1}
 
 
-
---local ledCount = 1
---local powerLevel = 1
---local larsonScaner = 1
---local apiVersion = 1
-
-
-local menuPosition = ITEM_SAVE+1--ITEM_LED
---local menuLength = 4
+local menuPosition = ITEM_LED
 local isItemActive = false
-local isOptionsMenuActive = true --false
-
-
+local isOptionsMenuActive = false
 local state = IDLE
 
 
 local function itemIncrease()
-  if menuPosition == ITEM_LED then 
-    if ledColor < #colorNames then
-      ledColor = ledColor + 1
-    end
-  end
-  if menuPosition == ITEM_VTX then
-    if vtxChannel < 8 then
-      vtxChannel = vtxChannel + 1
-    elseif vtxBand < #bandNames then
-      vtxBand = vtxBand + 1
-      vtxChannel = 1
-    end
-    if bandIds[vtxBand] == nil then
-      vtxChannel = 1
+
+  if menu[menuPosition] then
+    if menu[menuPosition].pos < #menu[menuPosition].labels then
+      menu[menuPosition].pos = menu[menuPosition].pos + 1
     end
   end
 end
 
 
 local function itemDecrease()
-  if menuPosition == ITEM_LED then 
-    if ledColor > 1 then
-      ledColor = ledColor - 1
-    end
-  end
-  if menuPosition == ITEM_VTX then
-    if vtxChannel > 1 then
-      vtxChannel = vtxChannel - 1
-    elseif vtxBand > 1 then
-      vtxBand = vtxBand - 1
-      vtxChannel = 8
+  if menu[menuPosition] then
+    if menu[menuPosition].pos > 1 then
+      menu[menuPosition].pos = menu[menuPosition].pos - 1
     end
   end
 end
@@ -107,17 +112,15 @@ end
 local function drawDisplay()
   lcd.clear()
   if isOptionsMenuActive then
-    gui.drawSmallSelector(1, "Power Level", "2",   menuPosition==ITEM_POWER, isItemActive)
-    gui.drawSmallSelector(2, "LED Count",   "3",   menuPosition==ITEM_COUNT, isItemActive)
-    gui.drawSmallSelector(3, "Larson",      "OFF", menuPosition==ITEM_LARSON, isItemActive)
-    gui.drawSmallSelector(4, "Version",     "4.5", menuPosition==ITEM_VERSION, isItemActive)
+    gui.drawSmallSelector(1, "Power Level",   menu[ITEM_POWER].labels[menu[ITEM_POWER].pos], menuPosition==ITEM_POWER, isItemActive)
+    gui.drawSmallSelector(2, "LED Count",   menu[ITEM_COUNT].labels[menu[ITEM_COUNT].pos], menuPosition==ITEM_COUNT, isItemActive)
+    gui.drawSmallSelector(3, "Larson Scan",   menu[ITEM_LARSON].labels[menu[ITEM_LARSON].pos], menuPosition==ITEM_LARSON, isItemActive)
+    gui.drawSmallSelector(4, "BF Version",   menu[ITEM_VERSION].labels[menu[ITEM_VERSION].pos], menuPosition==ITEM_VERSION, isItemActive)
   else
-    gui.drawSelector(1, colorNames[ledColor], menuPosition==ITEM_LED, isItemActive)
-    if bandIds[vtxBand] then
-      gui.drawSelector(2, bandNames[vtxBand] .. " " .. tostring(vtxChannel), menuPosition==ITEM_VTX, isItemActive)
-    else 
-      gui.drawSelector(2, bandNames[vtxBand], menuPosition==ITEM_VTX, isItemActive)
-    end
+    
+    gui.drawSelector(1, colorLabels[menu[ITEM_LED].pos], menuPosition==ITEM_LED, isItemActive)
+    gui.drawSelector(2, channelLabels[menu[ITEM_VTX].pos], menuPosition==ITEM_VTX, isItemActive)
+
     local btnText, event
     btnText, event = com.getStatus()
     btnSelected = (not btnText) and (menuPosition == ITEM_SAVE)
@@ -154,15 +157,14 @@ local function processEnterPress()
     isItemActive = not isItemActive
   else
     state = BUSY
-    -- TODO: transfer full structure
-    config.save(ledColor, vtxBand, vtxChannel)
-    com.sendLedVtxConfig(colorIds[ledColor], bandIds[vtxBand], vtxChannel, ledCount, mspApiVersion)
+    state = DONE -- TODO: remove this line
+    config.save(menu)
+    --com.sendLedVtxConfig(colorIds[ledColor], bandIds[vtxBand], vtxChannel, ledCount, mspApiVersion)  -- TODO: transfer all parameters
   end
 end
 
 
-local function run_func(event) 
-  print(menuPosition)
+local function run_func(event)
   com.mainLoop()
   if state ~= BUSY then
     if isItemActive then
@@ -216,7 +218,25 @@ end
 
 
 local function init_func()
-  ledColor, vtxBand, vtxChannel = config.load_(#colorNames, #bandNames)
+
+  limits = {}
+  for i = 1, 10 do
+    if menu[i] then
+      limits[#limits+1] = #menu[i].labels
+    end
+  end
+
+  positions = config.load_(limits)
+  for i = 1, #positions do
+    print(positions[i])
+  end
+  p = 1
+  for i = 1, 10 do
+    if menu[i] then
+      menu[i].pos = positions[p]
+      p = p+1
+    end
+  end
 end
 
 

@@ -14,26 +14,33 @@ local function checkLimits(value, maxValue)
 end
 
 
-local function loadConfig(colorsCount, bandsCount)
+local function loadConfig(limits)
+
   local f = io.open(configPath, "r")
+  local result = {}
   if f then
-    local savedColor = tonumber(io.read(f, 2))
-    io.read(f, 1)
-    local savedBand = tonumber(io.read(f, 1))
-    io.read(f, 1)
-    local savedChannel = tonumber(io.read(f, 1))
-    savedColor = checkLimits(savedColor, colorsCount)
-    savedBand = checkLimits(savedBand, bandsCount)
-    savedChannel = checkLimits(savedChannel, 8)
-    return savedColor, savedBand, savedChannel
+    for i = 1, #limits do 
+      val = tonumber(io.read(f, 2))
+      io.read(f, 1)
+      val = checkLimits(val, limits[i])
+      result[#result+1] = val
+    end
+  else
+    for i = 1, #limits do 
+      result[#result+1] = 1
+    end
   end
-  return 1, 1, 1
+  return result
 end
 
 
-local function saveConfig(color, band, channel)
+local function saveConfig(menu)
   local f = io.open(configPath, "w")
-  io.write(f, string.format("%2d %1d %1d",color, band, channel))
+  for i = 1, 10 do  -- TODO: check max menu id
+    if menu[i] then
+      io.write(f, string.format("%2d ", menu[i].pos))
+    end
+  end
   io.close(f)
 end
 

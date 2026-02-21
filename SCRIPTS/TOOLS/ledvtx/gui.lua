@@ -37,20 +37,23 @@ end
 
 local function drawSmallSelector(pos, label, text, isSelected, isActive)
   local flags = 0
-  -- TODO: offset
+  local offset = 0
   local y = (pos-1)*14+2
-  lcd.drawText(LCD_C-60, y+4, label)
-  if isSelected then
-    lcd.drawFilledRectangle(LCD_C+7, y+1, 24, 13, SOLID)
-    flags = INVERS
-  end
-  lcd.drawText(LCD_C+10, y+4, text, flags)
-  if isSelected then
-    if isActive then
-      drawArrow(LCD_C+0, y+7, 1)
-      drawArrow(LCD_C+37, y+7, -1)
+  if w == 0 then
+    offset = math.floor(string.len(text) * 2)
+    if isSelected then
+      lcd.drawFilledRectangle(LCD_C+13, y+1, 40, 13, SOLID)
+      flags = INVERS
     end
+  else 
+    -- TODO: something with wide screens
   end
+  if isSelected and isActive then
+    drawArrow(LCD_C+6, y+7, 1)
+    drawArrow(LCD_C+59, y+7, -1)
+  end
+  lcd.drawText(LCD_C-60, y+4, label)
+  lcd.drawText(LCD_C+31-offset, y+4, text, flags)
 end
 
 
