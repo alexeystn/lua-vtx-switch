@@ -35,6 +35,25 @@ local function drawSelector(pos, text, isSelected, isActive)
 end
 
 
+local function drawSmallSelector(pos, label, text, isSelected, isActive)
+  local flags = 0
+  -- TODO: offset
+  local y = (pos-1)*14+2
+  lcd.drawText(LCD_C-60, y+4, label)
+  if isSelected then
+    lcd.drawFilledRectangle(LCD_C+7, y+1, 24, 13, SOLID)
+    flags = INVERS
+  end
+  lcd.drawText(LCD_C+10, y+4, text, flags)
+  if isSelected then
+    if isActive then
+      drawArrow(LCD_C+0, y+7, 1)
+      drawArrow(LCD_C+37, y+7, -1)
+    end
+  end
+end
+
+
 local function drawButton(text, isSelected)
   local flags = 0
   local offset = 0
@@ -53,6 +72,19 @@ local function drawButton(text, isSelected)
   lcd.drawText(LCD_C-offset, 48+122*w, text, flags) 
 end
 
+
+local function drawOptions(isSelected)
+  local flags = 0
+  if isSelected then
+    flags = ERASE
+    lcd.drawFilledRectangle(0, 0, 9, 9, SOLID)
+  end
+  for i = 0, 2 do
+    lcd.drawLine(2, 2+i*2, 6, 2+i*2, SOLID, flags)
+  end
+end
+
+
 local function drawStatus()
   if getRSSI() > 0 then
     for i = 0, 3 do
@@ -62,4 +94,4 @@ local function drawStatus()
   end
 end
 
-return { drawSelector = drawSelector, drawButton = drawButton, drawStatus = drawStatus }
+return { drawSelector = drawSelector, drawButton = drawButton, drawStatus = drawStatus, drawOptions = drawOptions, drawSmallSelector = drawSmallSelector }

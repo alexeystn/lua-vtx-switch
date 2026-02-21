@@ -6,6 +6,23 @@ local gui = assert(loadScript("gui.lua"))()
 local config = assert(loadScript("config.lua"))()
 local com = assert(loadScript("com.lua"))()
 
+local ITEM_OPTS = 1
+local ITEM_LED = 2
+local ITEM_VTX = 3
+local ITEM_SAVE = 4
+
+local ITEM_POWER = 5
+local ITEM_COUNT = 6
+local ITEM_LARSON = 7
+local ITEM_VERSION = 8
+
+
+local IDLE=1
+local BUSY=2
+local DONE=3
+local FAIL=4
+
+
 local ledCount = 1   -- Default: 1.
 local mspApiVersion = 46  -- Default: 46. Set 45 if using BF4.4 or earlier.
 
@@ -19,18 +36,19 @@ local ledColor = 1
 local vtxBand = 1
 local vtxChannel = 1
 
-local menuPosition = 1
-local menuLength = 3
+
+
+--local ledCount = 1
+--local powerLevel = 1
+--local larsonScaner = 1
+--local apiVersion = 1
+
+
+local menuPosition = ITEM_SAVE+1--ITEM_LED
+--local menuLength = 4
 local isItemActive = false
+local isOptionsMenuActive = true --false
 
-local ITEM_LED = 1
-local ITEM_VTX = 2
-local ITEM_SAVE = 3
-
-local IDLE=1
-local BUSY=2
-local DONE=3
-local FAIL=4
 
 local state = IDLE
 
@@ -73,14 +91,14 @@ end
 
 
 local function menuMoveDown()
-  if menuPosition < menuLength then
+  if menuPosition ~= ITEM_SAVE and menuPosition ~= ITEM_VERSION then
     menuPosition = menuPosition + 1
   end
 end
 
 
 local function menuMoveUp()
-  if menuPosition > 1 then
+  if menuPosition ~= 1 and menuPosition ~= ITEM_SAVE+1 then
     menuPosition = menuPosition - 1
   end
 end
@@ -88,41 +106,55 @@ end
 
 local function drawDisplay()
   lcd.clear()
-  gui.drawSelector(1, colorNames[ledColor], menuPosition==1, isItemActive)
-  if bandIds[vtxBand] then
-    gui.drawSelector(2, bandNames[vtxBand] .. " " .. tostring(vtxChannel), menuPosition==2, isItemActive)
-  else 
-    gui.drawSelector(2, bandNames[vtxBand], menuPosition==2, isItemActive)
-  end
-  local text, event
-  text, event = com.getStatus()
-  sel = (not text) and (menuPosition == ITEM_SAVE)
-  if not text then
-    if event == 1 then
-      state = DONE
-    elseif event == -1 then
-      state = FAIL
+  if isOptionsMenuActive then
+    gui.drawSmallSelector(1, "Power Level", "2",   menuPosition==ITEM_POWER, isItemActive)
+    gui.drawSmallSelector(2, "LED Count",   "3",   menuPosition==ITEM_COUNT, isItemActive)
+    gui.drawSmallSelector(3, "Larson",      "OFF", menuPosition==ITEM_LARSON, isItemActive)
+    gui.drawSmallSelector(4, "Version",     "4.5", menuPosition==ITEM_VERSION, isItemActive)
+  else
+    gui.drawSelector(1, colorNames[ledColor], menuPosition==ITEM_LED, isItemActive)
+    if bandIds[vtxBand] then
+      gui.drawSelector(2, bandNames[vtxBand] .. " " .. tostring(vtxChannel), menuPosition==ITEM_VTX, isItemActive)
+    else 
+      gui.drawSelector(2, bandNames[vtxBand], menuPosition==ITEM_VTX, isItemActive)
     end
-    if state == DONE then
-      text = "Done"
-    elseif state == FAIL then
-      text = "Failed"
-    else
-      text = "Save"
+    local btnText, event
+    btnText, event = com.getStatus()
+    btnSelected = (not btnText) and (menuPosition == ITEM_SAVE)
+    if not btnText then
+      if event == 1 then
+        state = DONE
+      elseif event == -1 then
+        state = FAIL
+      end
+      if state == DONE then
+        btnText = "Done"
+      elseif state == FAIL then
+        btnText = "Failed"
+      else
+        btnText = "Save"
+      end
+    else 
+      state = BUSY
     end
-  else 
-    state = BUSY
+    gui.drawOptions(menuPosition == ITEM_OPTS)
+    gui.drawButton(btnText, btnSelected)
   end
-  gui.drawButton(text, sel)
   gui.drawStatus()
 end
 
 
 local function processEnterPress()
-  if menuPosition < menuLength then
+  if menuPosition == ITEM_OPTS then
+    menuPosition = ITEM_SAVE + 1
+    isOptionsMenuActive = true
+    return
+  end
+  if menuPosition ~= ITEM_SAVE and menuPosition ~= ITEM_OPTS then
     isItemActive = not isItemActive
   else
     state = BUSY
+    -- TODO: transfer full structure
     config.save(ledColor, vtxBand, vtxChannel)
     com.sendLedVtxConfig(colorIds[ledColor], bandIds[vtxBand], vtxChannel, ledCount, mspApiVersion)
   end
@@ -130,6 +162,7 @@ end
 
 
 local function run_func(event) 
+  print(menuPosition)
   com.mainLoop()
   if state ~= BUSY then
     if isItemActive then
@@ -150,7 +183,12 @@ local function run_func(event)
         menuMoveUp()
       end
       if event == EVT_EXIT_BREAK then
-        return -1
+        if isOptionsMenuActive then
+          isOptionsMenuActive = false
+          menuPosition = ITEM_LED
+        else
+          return -1
+        end
       end
     end
   end
