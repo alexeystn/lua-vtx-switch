@@ -22,8 +22,8 @@ local DONE=3
 local FAIL=4
 
 
-local colorLabels = { "Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Violet", "White", "Black", "   * * * *" }
-local colorIds = { 2, 3, 4, 6, 8, 10, 13, 1, 0, nil }
+local colorLabels = { "Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Violet", "Magenta", "White", "Black", "   * * * *" }
+local colorIds = { 2, 3, 4, 6, 8, 10, 11, 13, 1, 0, nil }
 
 local bandNames = { "Raceband", "Fatshark", "Lowband"}
 local bandIds = { 5, 4, 6 }
@@ -31,13 +31,13 @@ local bandIds = { 5, 4, 6 }
 local switchLabels = {"OFF", "ON"}
 local switchIds = {0, 1}
 
-local versionLabels = {" 4.4", " 4.5", " 4.6"}
-local versionIds = {145, 146, 147}
+local versionLabels = {" 4.5+", " 4.4-"}
+local versionIds = {0, 1}
 
 local powerLabels = {}
 local powerIds = {}
 for i = 0, 4 do
-  powerLabels[#powerLabels+1] = tostring(i)
+  powerLabels[#powerLabels+1] = tostring(i+1)
   powerIds[#powerIds+1] = i
 end
 

@@ -83,24 +83,24 @@ end
 
 
 local function prepareLedCommand(color, n, larson, version)
-  -- 16*larson
   local cmd = {}
   cmd.header = MSP_SET_LED_STRIP
-  --if version < 146 then
-  --  cmd.payload = { n-1, (n-1)*16, 0, color*4, 0 }
-  --else 
-  cmd.payload = { n-1, (n-1)*16, 0, bit32.lshift(bit32.band(color, 0x03), 6), bit32.rshift(color, 2)}
-  --end
+  -- check offsets in 'src/main/io/ledstrip.h'
+  if version == 0 then -- BF 4.5+
+    cmd.payload = { n-1, (n-1)*16, 64*larson, bit32.lshift(bit32.band(color, 0x03), 6), bit32.rshift(color, 2)}
+  else  -- BF 4.4-
+    cmd.payload = { n-1, (n-1)*16, 0, color*4, 0 }
+  end 
   cmd.write = true
   cmd.text = "Switching LED " .. tostring(n)
   return cmd
 end
 
 
-local function prepareVtxCommand(band, channel)
+local function prepareVtxCommand(band, channel, power)
   local cmd = {}
   cmd.header = MSP_VTX_SET_CONFIG
-  cmd.payload = { (band-1)*8 + (channel-1), 0, 1, 0 }
+  cmd.payload = { (band-1)*8 + (channel-1), 0, power+1, 0 }
   cmd.write = true
   cmd.text = "Switching VTX"
   return cmd
@@ -126,7 +126,7 @@ local function sendLedVtxConfig(args)
 
   local cmd = {}
   if args.band then
-    cmd[#cmd+1] = prepareVtxCommand(args.band, args.channel)
+    cmd[#cmd+1] = prepareVtxCommand(args.band, args.channel, args.power)
   end
   if args.color then
     for i = 1, args.count do
