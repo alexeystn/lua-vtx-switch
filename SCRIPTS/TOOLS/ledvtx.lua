@@ -222,7 +222,6 @@ end
 
 
 local function bg_func()
-  --com.bgLoop()
 end
 
 

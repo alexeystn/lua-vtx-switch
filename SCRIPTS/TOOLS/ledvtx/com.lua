@@ -3,14 +3,12 @@ local msp = assert(loadScript("msp.lua"))()
 local MSP_VTX_SET_CONFIG = 89
 local MSP_EEPROM_WRITE = 250
 local MSP_SET_LED_STRIP = 49
-local MSP_SET_RTC = 246
 
 local isBusy = false
 local retryCount = 0
 local maxRetries = 4
 local retryTimeout = 200
 local nextTryTime = 0
-local nextRtcTime = 0
 
 local successFlag = false
 local failedFlag = false
@@ -120,33 +118,20 @@ local function prepareSaveCommand()
 end
 
 
-local function prepareRtcCommand()
-  local now = getRtcTime()
-  local values = {}
-  for i = 1, 4 do
-    values[i] = bit32.band(now, 0xFF)
-    now = bit32.rshift(now, 8)
-  end
-  values[5] = 0 
-  values[6] = 0
-  cmd = {}
-  cmd.header = MSP_SET_RTC
-  cmd.payload = values
-  cmd.write = true
-  cmd.text = "RTC"
-  return cmd  
-end
-
-
-local function sendLedVtxConfig(color, band, channel, count, version)  
+local function sendLedVtxConfig(args)
   retryCount = 0
+  print('Config')
+  print('VTX:', args.band, args.channel)
+  print('LED:', args.color, args.count, args.larson)
+  print('API:', args.version)
+
   local cmd = {}
-  if band then
-    cmd[#cmd+1] = prepareVtxCommand(band, channel)
+  if args.band then
+    cmd[#cmd+1] = prepareVtxCommand(args.band, args.channel)
   end
-  if color then
-    for i = 1, count do
-      cmd[#cmd+1] = prepareLedCommand(color, i, version)
+  if args.color then
+    for i = 1, args.count do
+      cmd[#cmd+1] = prepareLedCommand(args.color, i, args.larson, args.version)
     end
   end
   cmd[#cmd+1] = prepareSaveCommand()
@@ -204,4 +189,4 @@ end
 
 
 return { sendLedVtxConfig = sendLedVtxConfig, mainLoop = comMainLoop, getStatus=getStatus, 
-  cancel=cancel, bgLoop=comBgLoop, setDebug=setDebugButtonState}
+  cancel=cancel, setDebug=setDebugButtonState}
