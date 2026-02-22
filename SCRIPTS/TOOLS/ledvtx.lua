@@ -177,21 +177,23 @@ local function run_func(event)
   com.mainLoop()
   if state ~= BUSY then
     if isItemActive then
-      if event == EVT_ROT_RIGHT or event == EVT_PLUS_FIRST or event == EVT_PLUS_REPT then
+      if event == EVT_VIRTUAL_INC or event == EVT_VIRTUAL_INC_REPT then
         itemIncrease()
-      end
-      if event == EVT_ROT_LEFT or event == EVT_MINUS_FIRST or event == EVT_MINUS_REPT then
-        itemDecrease()
+      else
+        if event == EVT_VIRTUAL_DEC or event == EVT_VIRTUAL_DEC_REPT then
+          itemDecrease()
+        end
       end
       if event == EVT_EXIT_BREAK then
         isItemActive = false
       end
     else 
-      if event == EVT_ROT_RIGHT or event == EVT_MINUS_FIRST or event == EVT_MINUS_REPT then
+      if event == EVT_VIRTUAL_NEXT or event == EVT_VIRTUAL_NEXT_REPT then
         menuMoveDown()
-      end
-      if event == EVT_ROT_LEFT or event == EVT_PLUS_FIRST or event == EVT_PLUS_REPT then
-        menuMoveUp()
+      else
+        if event == EVT_VIRTUAL_PREV or event == EVT_VIRTUAL_PREV_REPT then
+          menuMoveUp()
+        end
       end
       if event == EVT_EXIT_BREAK then
         if isOptionsMenuActive then
@@ -213,7 +215,7 @@ local function run_func(event)
     com.cancel()
     state = IDLE
   end  
-  if ((state == DONE) or (state == FAIL)) and (event == EVT_ROT_LEFT or event == EVT_ROT_RIGHT) then 
+  if ((state == DONE) or (state == FAIL)) and (event == EVT_VIRTUAL_NEXT or event == EVT_VIRTUAL_PREV) then 
     state = IDLE
   end
   drawDisplay()
