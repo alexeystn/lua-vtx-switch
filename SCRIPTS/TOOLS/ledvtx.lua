@@ -31,7 +31,7 @@ local bandIds = { 5, 4, 6 }
 local switchLabels = {"OFF", "ON"}
 local switchIds = {0, 1}
 
-local versionLabels = {" 4.5+", " 4.4-"}
+local versionLabels = {"4.5+", "4.4-"}
 local versionIds = {0, 1}
 
 local powerLabels = {}
@@ -114,7 +114,7 @@ local function drawDisplay()
     gui.drawSmallSelector(1, "Power Level",   menu[ITEM_POWER].labels[menu[ITEM_POWER].pos], menuPosition==ITEM_POWER, isItemActive)
     gui.drawSmallSelector(2, "LED Count",   menu[ITEM_COUNT].labels[menu[ITEM_COUNT].pos], menuPosition==ITEM_COUNT, isItemActive)
     gui.drawSmallSelector(3, "Larson Scan",   menu[ITEM_LARSON].labels[menu[ITEM_LARSON].pos], menuPosition==ITEM_LARSON, isItemActive)
-    gui.drawSmallSelector(4, "BF Version",   menu[ITEM_VERSION].labels[menu[ITEM_VERSION].pos], menuPosition==ITEM_VERSION, isItemActive)
+    gui.drawSmallSelector(4, "BF Version",   menu[ITEM_VERSION].labels[menu[ITEM_VERSION].pos], menuPosition==ITEM_VERSION, isItemActive, -4)
   else
     
     gui.drawSelector(1, colorLabels[menu[ITEM_LED].pos], menuPosition==ITEM_LED, isItemActive)
