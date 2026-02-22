@@ -82,16 +82,15 @@ local function startTransmission(commands)
 end
 
 
-local function prepareLedCommand(color, n, version)
+local function prepareLedCommand(color, n, larson, version)
+  -- 16*larson
   local cmd = {}
   cmd.header = MSP_SET_LED_STRIP
-  enableLarsonScanner = 0
-  
-  if version < 46 then
-    cmd.payload = { n-1, (n-1)*16, 16*enableLarsonScanner, color*4, 0 }
-  else 
-    cmd.payload = { n-1, (n-1)*16, 16*enableLarsonScanner, bit32.lshift(bit32.band(color, 0x03), 6), bit32.rshift(color, 2)}
-  end
+  --if version < 146 then
+  --  cmd.payload = { n-1, (n-1)*16, 0, color*4, 0 }
+  --else 
+  cmd.payload = { n-1, (n-1)*16, 0, bit32.lshift(bit32.band(color, 0x03), 6), bit32.rshift(color, 2)}
+  --end
   cmd.write = true
   cmd.text = "Switching LED " .. tostring(n)
   return cmd
@@ -173,18 +172,6 @@ end
 
 function cancel()
   isBusy = false
-end
-
-
-function comBgLoop()
-  if getTime() > nextRtcTime then
-    nextRtcTime = getTime() + 500
-    rtcCommand = prepareRtcCommand()
-    msp.write(rtcCommand.header, rtcCommand.payload)
-    print(rtcCommand.text)
-  end
-  msp.processTxQ()
-  processMspReply(msp.pollReply())  
 end
 
 

@@ -32,7 +32,7 @@ local switchLabels = {"OFF", "ON"}
 local switchIds = {0, 1}
 
 local versionLabels = {" 4.4", " 4.5", " 4.6"}
-local versionIds = {44, 45, 46}
+local versionIds = {145, 146, 147}
 
 local powerLabels = {}
 local powerIds = {}
@@ -161,14 +161,14 @@ local function processEnterPress()
     
     args = {
       color = menu[ITEM_LED].values[menu[ITEM_LED].pos],
-      band = menu[ITEM_VTX].values[menu[ITEM_VTX].pos][0],
-      channel = menu[ITEM_VTX].values[menu[ITEM_VTX].pos][1],
+      band = menu[ITEM_VTX].values[menu[ITEM_VTX].pos][1],
+      channel = menu[ITEM_VTX].values[menu[ITEM_VTX].pos][2],
       power = menu[ITEM_POWER].values[menu[ITEM_POWER].pos],
       count = menu[ITEM_COUNT].values[menu[ITEM_COUNT].pos],
       larson = menu[ITEM_LARSON].values[menu[ITEM_LARSON].pos],
       version = menu[ITEM_VERSION].values[menu[ITEM_VERSION].pos]
     }
-    --com.sendLedVtxConfig(colorIds[ledColor], bandIds[vtxBand], vtxChannel, ledCount, mspApiVersion)  -- TODO: transfer all parameters
+    com.sendLedVtxConfig(args)  -- TODO: transfer all parameters
   end
 end
 
