@@ -24,7 +24,7 @@ local function drawSelector(pos, text, isSelected, isActive)
   else 
     flags = DBLSIZE + CENTER
     if isSelected then 
-      lcd.drawRectangle(LCD_C-120, 50*(pos-1)+60, 240, 44, SOLID, 2)
+      lcd.drawRectangle(LCD_C-120, 50*(pos-1)+62, 240, 44, SOLID, 2)
     end
   end
   if isActive and isSelected then
@@ -38,6 +38,9 @@ end
 local function drawSmallSelector(pos, label, text, isSelected, isActive, offset)
   local flags = 0
   local y = 0
+  if w == 0 and #label > 11 then
+    label = string.sub(label, 1, 11)
+  end
   if offset == nil then
     offset = 0
   end
@@ -53,15 +56,15 @@ local function drawSmallSelector(pos, label, text, isSelected, isActive, offset)
     y = (pos-1)*30+60
     flags = CENTER
     if isSelected then
-      lcd.drawRectangle(LCD_C+20, y, 60, 28, SOLID, 2)
+      lcd.drawRectangle(LCD_C+30, y, 60, 28, SOLID, 2)
     end
   end
   if isSelected and isActive then
-    drawArrow(LCD_C+8-5*w, y+7 + 7*w, 1)
-    drawArrow(LCD_C+57+34*w+5*w, y+7 +7*w, -1)
+    drawArrow(LCD_C+8+5*w, y+7 + 7*w, 1)
+    drawArrow(LCD_C+57+34*w+15*w, y+7 +7*w, -1)
   end
   lcd.drawText(LCD_C-60-40*w, y+4, label)
-  lcd.drawText(LCD_C+30+20*w-offset, y+4, text, flags)
+  lcd.drawText(LCD_C+30+30*w-offset, y+4, text, flags)
 end
 
 
