@@ -6,7 +6,7 @@
 
 ### Установка скрипта OpenTX
 
-1) Скачать [zip-архив](https://github.com/alexeystn/lua-vtx-switch/archive/refs/heads/master.zip) и распаковать.
+1) Скачать [zip-архив](https://github.com/alexeystn/lua-vtx-switch/archive/refs/tags/1.0.zip) и распаковать.
 2) Скопировать содержимое папки `SCRIPTS/TOOLS` из архива в папку `SCRIPTS/TOOLS` на SD карте.
 3) На аппаратуре открыть меню `TOOLS` (долгим нажатием кнопки `Menu`) и выбрать `LED & VTX setup`
 4) *(Опционально)*. Для быстрого доступа к скрипту на экране телеметрии
