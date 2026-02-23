@@ -14,26 +14,47 @@ local function checkLimits(value, maxValue)
 end
 
 
-local function loadConfig(colorsCount, bandsCount)
-  local f = io.open(configPath, "r")
-  if f then
-    local savedColor = tonumber(io.read(f, 2))
-    io.read(f, 1)
-    local savedBand = tonumber(io.read(f, 1))
-    io.read(f, 1)
-    local savedChannel = tonumber(io.read(f, 1))
-    savedColor = checkLimits(savedColor, colorsCount)
-    savedBand = checkLimits(savedBand, bandsCount)
-    savedChannel = checkLimits(savedChannel, 8)
-    return savedColor, savedBand, savedChannel
+local function getMenuLength(menu)
+  local result = 0
+  for k, v in pairs(menu) do
+    if k > result then
+      result = k
+    end
   end
-  return 1, 1, 1
+  print(result)
+  return result
 end
 
 
-local function saveConfig(color, band, channel)
+local function loadConfig(menu)
+  local menuLength = getMenuLength(menu)
+  local f = io.open(configPath, "r")
+  if f then
+    for i = 1, menuLength do
+      if menu[i] then
+        val = tonumber(io.read(f, 2))
+        io.read(f, 1)
+        menu[i].pos = checkLimits(val, #menu[i].labels)
+      end
+    end
+  else
+    for i = 1, menuLength do
+      if menu[i] then
+        menu[i].pos = 1
+      end
+    end
+  end
+end
+
+
+local function saveConfig(menu)
+  local menuLength = getMenuLength(menu)
   local f = io.open(configPath, "w")
-  io.write(f, string.format("%2d %1d %1d",color, band, channel))
+  for i = 1, menuLength do  
+    if menu[i] then
+      io.write(f, string.format("%2d ", menu[i].pos))
+    end
+  end
   io.close(f)
 end
 
