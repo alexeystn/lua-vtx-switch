@@ -38,6 +38,7 @@ local function sendCurrentCommand()
   if retryCount > maxRetries then
     isBusy = false
     failedFlag = true
+    return
   end
   if currentCommand.write then
     msp.write(currentCommand.header, currentCommand.payload)
