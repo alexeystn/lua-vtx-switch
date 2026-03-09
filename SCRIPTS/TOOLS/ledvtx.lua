@@ -21,6 +21,7 @@ local BUSY=2
 local DONE=3
 local FAIL=4
 
+local maxLedCount = 32
 
 local colorLabels = { "Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Violet", "Magenta", "White", "Black", "   * * * *" }
 local colorIds = { 2, 3, 4, 6, 8, 10, 11, 12, 1, 0, nil }
@@ -43,7 +44,7 @@ end
 
 local countLabels = {}
 local countIds = {}
-for i = 1, 10 do
+for i = 1, maxLedCount do
   countLabels[#countLabels+1] = tostring(i)
   countIds[#countIds+1] = i
 end
