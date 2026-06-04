@@ -16,6 +16,7 @@ local ITEM_COUNT = 6
 local ITEM_LARSON = 7
 local ITEM_VERSION = 8
 local ITEM_VTX_MODE = 9
+local ITEM_BANDS = 10
 
 local IDLE=1
 local BUSY=2
@@ -24,6 +25,9 @@ local FAIL=4
 
 local VTX_MODE_MSP = 1
 local VTX_MODE_ELRS = 2
+
+local BANDS_ANALOG = 1
+local BANDS_HDZERO = 2
 
 local maxLedCount = 32
 
@@ -42,6 +46,9 @@ local versionIds = {0, 1}
 local vtxModeLabels = {"MSP", "ELRS"}
 local vtxModeIds = {VTX_MODE_MSP, VTX_MODE_ELRS}
 
+local bandsLabels = {"Analog", "HDZero"}
+local bandsIds = {BANDS_ANALOG, BANDS_HDZERO}
+
 local powerLabels = {}
 local powerIds = {}
 powerLabels[#powerLabels+1] = "-"
@@ -58,16 +65,31 @@ for i = 1, maxLedCount do
   countIds[#countIds+1] = i
 end
 
+local analogChannels = {}
+local hdzeroChannels = {}
 local channelLabels = {}
 local channelIds = {}
+
+local function addChannel(list, band, channel)
+  list[#list+1] = {band, channel}
+end
+
 for iBand = 1, #bandNames do
   for iCh = 1, 8 do
-    channelLabels[#channelLabels+1] = bandNames[iBand] .. " " .. tostring(iCh)
-    channelIds[#channelIds+1] = {bandIds[iBand], iCh}
+    addChannel(analogChannels, bandIds[iBand], iCh)
   end
 end
-channelLabels[#channelLabels+1] = "   * * * *"
-channelIds[#channelIds+1] = {nil, nil}
+
+for iCh = 1, 8 do
+  addChannel(hdzeroChannels, 5, iCh)
+end
+addChannel(hdzeroChannels, 3, 1)
+addChannel(hdzeroChannels, 4, 1)
+addChannel(hdzeroChannels, 4, 2)
+addChannel(hdzeroChannels, 4, 4)
+for iCh = 1, 8 do
+  addChannel(hdzeroChannels, 6, iCh)
+end
 
 menu = {}
 
@@ -78,6 +100,7 @@ menu[ITEM_COUNT] = {labels = countLabels, values = countIds, pos = 1}
 menu[ITEM_LARSON] = {labels = switchLabels, values = switchIds, pos = 1}
 menu[ITEM_VERSION] = {labels = versionLabels, values = versionIds, pos = 1}
 menu[ITEM_VTX_MODE] = {labels = vtxModeLabels, values = vtxModeIds, pos = 1}
+menu[ITEM_BANDS] = {labels = bandsLabels, values = bandsIds, pos = 1}
 
 
 local menuPosition = ITEM_LED
@@ -91,6 +114,70 @@ local statusText = nil
 local function getVtxMode()
   return menu[ITEM_VTX_MODE].values[menu[ITEM_VTX_MODE].pos]
 end
+
+
+local function getBandsMode()
+  return menu[ITEM_BANDS].values[menu[ITEM_BANDS].pos]
+end
+
+
+local function getBandName(band)
+  for i = 1, #bandIds do
+    if bandIds[i] == band then
+      return bandNames[i]
+    end
+  end
+  return "Band " .. tostring(band)
+end
+
+
+local function channelLabel(band, channel)
+  if band and channel then
+    return getBandName(band) .. " " .. tostring(channel)
+  end
+  return "   * * * *"
+end
+
+
+local function fillChannelList(currentBand, currentChannel)
+  local source = getBandsMode() == BANDS_HDZERO and hdzeroChannels or analogChannels
+  channelLabels = {}
+  channelIds = {}
+
+  for i = 1, #source do
+    local band = source[i][1]
+    local channel = source[i][2]
+    channelLabels[#channelLabels+1] = channelLabel(band, channel)
+    channelIds[#channelIds+1] = {band, channel}
+  end
+
+  channelLabels[#channelLabels+1] = "   * * * *"
+  channelIds[#channelIds+1] = {nil, nil}
+
+  if currentBand and currentChannel then
+    for i = 1, #channelIds do
+      if channelIds[i][1] == currentBand and channelIds[i][2] == currentChannel then
+        menu[ITEM_VTX].labels = channelLabels
+        menu[ITEM_VTX].values = channelIds
+        menu[ITEM_VTX].pos = i
+        return
+      end
+    end
+
+    channelLabels[#channelLabels+1] = channelLabel(currentBand, currentChannel)
+    channelIds[#channelIds+1] = {currentBand, currentChannel}
+    menu[ITEM_VTX].pos = #channelLabels
+  end
+
+  menu[ITEM_VTX].labels = channelLabels
+  menu[ITEM_VTX].values = channelIds
+  if menu[ITEM_VTX].pos > #channelLabels then
+    menu[ITEM_VTX].pos = #channelLabels
+  end
+end
+
+
+fillChannelList()
 
 
 local function itemIncrease()
@@ -113,7 +200,7 @@ end
 
 
 local function menuMoveDown()
-  if menuPosition ~= ITEM_SAVE and menuPosition ~= ITEM_VTX_MODE then
+  if menuPosition ~= ITEM_SAVE and menuPosition ~= ITEM_BANDS then
     menuPosition = menuPosition + 1
   end
 end
@@ -145,8 +232,8 @@ local function drawDisplay()
     local firstOption = menuPosition - 3
     if firstOption < ITEM_POWER then
       firstOption = ITEM_POWER
-    elseif firstOption > ITEM_VTX_MODE - 3 then
-      firstOption = ITEM_VTX_MODE - 3
+    elseif firstOption > ITEM_BANDS - 3 then
+      firstOption = ITEM_BANDS - 3
     end
     for row = 1, 4 do
       local item = firstOption + row - 1
@@ -163,6 +250,8 @@ local function drawDisplay()
         offset = -4
       elseif item == ITEM_VTX_MODE then
         label = "VTX Mode"
+      elseif item == ITEM_BANDS then
+        label = "Bands"
       end
       gui.drawSmallSelector(row, label, menu[item].labels[menu[item].pos], menuPosition==item, isItemActive, offset)
     end
@@ -197,13 +286,8 @@ local function applyVtxConfig(config_)
     return
   end
   -- Mirror the current TX-module VTX state into the menu without forcing a write.
-  for i = 1, #channelIds do
-    if channelIds[i][1] == config_.band and channelIds[i][2] == config_.channel then
-      menu[ITEM_VTX].pos = i
-      vtxConfigVersion = config_.version
-      break
-    end
-  end
+  fillChannelList(config_.band, config_.channel)
+  vtxConfigVersion = config_.version
   if config_.power then
     for i = 1, #powerIds do
       if powerIds[i] == config_.power then
@@ -245,6 +329,10 @@ local function processEnterPress()
   if menuPosition ~= ITEM_SAVE and menuPosition ~= ITEM_OPTS then
     local wasActive = isItemActive
     isItemActive = not isItemActive
+    if wasActive and menuPosition == ITEM_BANDS then
+      local current = menu[ITEM_VTX].values[menu[ITEM_VTX].pos]
+      fillChannelList(current[1], current[2])
+    end
     if wasActive and (menuPosition == ITEM_VTX or menuPosition == ITEM_POWER) then
       sendElrsVtxConfig()
     end
@@ -322,7 +410,8 @@ end
 
 
 local function init_func()
-  config.load_(menu)  
+  config.load_(menu)
+  fillChannelList()
 end
 
 
