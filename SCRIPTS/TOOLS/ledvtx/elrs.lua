@@ -177,7 +177,7 @@ local function pushPendingVtxConfig()
     return false
   end
 
-  -- Send the final VTX write to the TX module; it handles the downstream update.
+  -- Send VTx makes ELRS forward MSP to FC/RX and to TX Backpack when allowed.
   queueWrite(fieldIds.band or fallbackFieldIds.band, pendingVtxArgs.band)
   queueWrite(fieldIds.channel or fallbackFieldIds.channel, pendingVtxArgs.channel)
   if pendingVtxArgs.power then

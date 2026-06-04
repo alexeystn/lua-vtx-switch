@@ -1,6 +1,10 @@
 local msp = assert(loadScript("msp.lua"))()
 local elrs = assert(loadScript("elrs.lua"))()
 
+local VTX_MODE_MSP = 1
+local VTX_MODE_ELRS = 2
+
+local MSP_VTX_SET_CONFIG = 89
 local MSP_EEPROM_WRITE = 250
 local MSP_SET_LED_STRIP = 49
 
@@ -104,6 +108,16 @@ local function prepareLedCommand(color, n, larson, version)
 end
 
 
+local function prepareVtxCommand(band, channel, power)
+  local cmd = {}
+  cmd.header = MSP_VTX_SET_CONFIG
+  cmd.payload = { (band-1)*8 + (channel-1), 0, power, 0 }
+  cmd.write = true
+  cmd.text = "Switching VTX"
+  return cmd
+end
+
+
 local function prepareSaveCommand()
   local cmd = {}
   cmd.header = MSP_EEPROM_WRITE
@@ -117,28 +131,34 @@ end
 local function sendLedVtxConfig(args)
   retryCount = 0
   transactionActive = true
-  mspResult = args.color and 0 or 1
-  elrsResult = args.band and 0 or 1
+  mspResult = (args.color or (args.band and args.vtxMode == VTX_MODE_MSP)) and 0 or 1
+  elrsResult = (args.band and args.vtxMode == VTX_MODE_ELRS) and 0 or 1
   pendingMspCommands = nil
   print('Config')
   print('VTX:', args.band, args.channel)
   print('LED:', args.color, args.count, args.larson)
   print('API:', args.version)
+  print('VTX mode:', args.vtxMode)
 
   local cmd = {}
-  if args.band then
+  if args.band and args.vtxMode == VTX_MODE_ELRS then
     -- VTX config goes to the ELRS TX module; it forwards the change itself.
     elrs.sendVtxConfig(args)
+  elseif args.band then
+    -- Original path: write VTX directly to Betaflight over MSP.
+    cmd[#cmd+1] = prepareVtxCommand(args.band, args.channel, args.power)
   end
   if args.color then
     for i = 1, args.count do
       cmd[#cmd+1] = prepareLedCommand(args.color, i, args.larson, args.version)
     end
+  end
+  if #cmd > 0 then
     cmd[#cmd+1] = prepareSaveCommand()
   end
   if #cmd > 0 then
     pendingMspCommands = cmd
-    if not args.band then
+    if args.vtxMode ~= VTX_MODE_ELRS or not args.band then
       startTransmission(pendingMspCommands)
       pendingMspCommands = nil
     end
@@ -177,7 +197,7 @@ local function getStatus()
 end
 
 
-function comMainLoop()
+function comMainLoop(vtxMode)
   if isBusy then
     currentTime = getTime()
     if currentTime > nextTryTime then 
@@ -190,7 +210,9 @@ function comMainLoop()
     elrs.mainLoop()
   else
     -- LED MSP commands stay on the existing Betaflight path.
-    elrs.mainLoop()
+    if vtxMode == VTX_MODE_ELRS then
+      elrs.mainLoop()
+    end
     if pendingMspCommands then
       startTransmission(pendingMspCommands)
       pendingMspCommands = nil

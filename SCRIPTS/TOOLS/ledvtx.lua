@@ -15,11 +15,15 @@ local ITEM_POWER = 5
 local ITEM_COUNT = 6
 local ITEM_LARSON = 7
 local ITEM_VERSION = 8
+local ITEM_VTX_MODE = 9
 
 local IDLE=1
 local BUSY=2
 local DONE=3
 local FAIL=4
+
+local VTX_MODE_MSP = 1
+local VTX_MODE_ELRS = 2
 
 local maxLedCount = 32
 
@@ -34,6 +38,9 @@ local switchIds = {0, 1}
 
 local versionLabels = {"4.5+", "4.4-"}
 local versionIds = {0, 1}
+
+local vtxModeLabels = {"MSP", "ELRS"}
+local vtxModeIds = {VTX_MODE_MSP, VTX_MODE_ELRS}
 
 local powerLabels = {}
 local powerIds = {}
@@ -68,6 +75,7 @@ menu[ITEM_POWER] = {labels = powerLabels, values = powerIds, pos = 1}
 menu[ITEM_COUNT] = {labels = countLabels, values = countIds, pos = 1}
 menu[ITEM_LARSON] = {labels = switchLabels, values = switchIds, pos = 1}
 menu[ITEM_VERSION] = {labels = versionLabels, values = versionIds, pos = 1}
+menu[ITEM_VTX_MODE] = {labels = vtxModeLabels, values = vtxModeIds, pos = 1}
 
 
 local menuPosition = ITEM_LED
@@ -75,6 +83,11 @@ local isItemActive = false
 local isOptionsMenuActive = false
 local state = IDLE
 local vtxConfigVersion = nil
+
+
+local function getVtxMode()
+  return menu[ITEM_VTX_MODE].values[menu[ITEM_VTX_MODE].pos]
+end
 
 
 local function itemIncrease()
@@ -97,7 +110,7 @@ end
 
 
 local function menuMoveDown()
-  if menuPosition ~= ITEM_SAVE and menuPosition ~= ITEM_VERSION then
+  if menuPosition ~= ITEM_SAVE and menuPosition ~= ITEM_VTX_MODE then
     menuPosition = menuPosition + 1
   end
 end
@@ -113,10 +126,30 @@ end
 local function drawDisplay()
   lcd.clear()
   if isOptionsMenuActive then
-    gui.drawSmallSelector(1, "Power Level",   menu[ITEM_POWER].labels[menu[ITEM_POWER].pos], menuPosition==ITEM_POWER, isItemActive)
-    gui.drawSmallSelector(2, "LED Count",   menu[ITEM_COUNT].labels[menu[ITEM_COUNT].pos], menuPosition==ITEM_COUNT, isItemActive)
-    gui.drawSmallSelector(3, "Larson Scanner",   menu[ITEM_LARSON].labels[menu[ITEM_LARSON].pos], menuPosition==ITEM_LARSON, isItemActive)
-    gui.drawSmallSelector(4, "BF Version",   menu[ITEM_VERSION].labels[menu[ITEM_VERSION].pos], menuPosition==ITEM_VERSION, isItemActive, -4)
+    local firstOption = menuPosition - 3
+    if firstOption < ITEM_POWER then
+      firstOption = ITEM_POWER
+    elseif firstOption > ITEM_VTX_MODE - 3 then
+      firstOption = ITEM_VTX_MODE - 3
+    end
+    for row = 1, 4 do
+      local item = firstOption + row - 1
+      local label = ""
+      local offset = nil
+      if item == ITEM_POWER then
+        label = "Power Level"
+      elseif item == ITEM_COUNT then
+        label = "LED Count"
+      elseif item == ITEM_LARSON then
+        label = "Larson Scanner"
+      elseif item == ITEM_VERSION then
+        label = "BF Version"
+        offset = -4
+      elseif item == ITEM_VTX_MODE then
+        label = "VTX Mode"
+      end
+      gui.drawSmallSelector(row, label, menu[item].labels[menu[item].pos], menuPosition==item, isItemActive, offset)
+    end
   else
     
     gui.drawSelector(1, colorLabels[menu[ITEM_LED].pos], menuPosition==ITEM_LED, isItemActive)
@@ -194,7 +227,8 @@ local function processEnterPress()
       power = menu[ITEM_POWER].values[menu[ITEM_POWER].pos],
       count = menu[ITEM_COUNT].values[menu[ITEM_COUNT].pos],
       larson = menu[ITEM_LARSON].values[menu[ITEM_LARSON].pos],
-      version = menu[ITEM_VERSION].values[menu[ITEM_VERSION].pos]
+      version = menu[ITEM_VERSION].values[menu[ITEM_VERSION].pos],
+      vtxMode = getVtxMode()
     }
     com.sendLedVtxConfig(args)  -- TODO: transfer all parameters
   end
@@ -202,8 +236,10 @@ end
 
 
 local function run_func(event)
-  com.mainLoop()
-  applyVtxConfig(com.getVtxConfig())
+  com.mainLoop(getVtxMode())
+  if getVtxMode() == VTX_MODE_ELRS then
+    applyVtxConfig(com.getVtxConfig())
+  end
   if state ~= BUSY then
     if isItemActive then
       if event == EVT_VIRTUAL_INC or event == EVT_VIRTUAL_INC_REPT then
