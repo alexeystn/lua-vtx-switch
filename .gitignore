@@ -1,2 +1,3 @@
 *.luac
 *.etx
+.DS_Store
