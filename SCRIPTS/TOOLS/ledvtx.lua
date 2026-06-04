@@ -209,6 +209,27 @@ local function applyVtxConfig(config_)
 end
 
 
+local function prepareVtxArgs()
+  return {
+    band = menu[ITEM_VTX].values[menu[ITEM_VTX].pos][1],
+    channel = menu[ITEM_VTX].values[menu[ITEM_VTX].pos][2],
+    power = menu[ITEM_POWER].values[menu[ITEM_POWER].pos],
+    vtxMode = getVtxMode()
+  }
+end
+
+
+local function sendElrsVtxConfig()
+  local args = prepareVtxArgs()
+  if getVtxMode() ~= VTX_MODE_ELRS or not args.band then
+    return
+  end
+  state = BUSY
+  config.save(menu)
+  com.sendLedVtxConfig(args)
+end
+
+
 local function processEnterPress()
   if menuPosition == ITEM_OPTS then
     menuPosition = ITEM_SAVE + 1
@@ -216,22 +237,21 @@ local function processEnterPress()
     return
   end
   if menuPosition ~= ITEM_SAVE and menuPosition ~= ITEM_OPTS then
+    local wasActive = isItemActive
     isItemActive = not isItemActive
+    if wasActive and (menuPosition == ITEM_VTX or menuPosition == ITEM_POWER) then
+      sendElrsVtxConfig()
+    end
   else
     state = BUSY
     state = DONE -- TODO: remove this line
     config.save(menu)
-    
-    args = {
-      color = menu[ITEM_LED].values[menu[ITEM_LED].pos],
-      band = menu[ITEM_VTX].values[menu[ITEM_VTX].pos][1],
-      channel = menu[ITEM_VTX].values[menu[ITEM_VTX].pos][2],
-      power = menu[ITEM_POWER].values[menu[ITEM_POWER].pos],
-      count = menu[ITEM_COUNT].values[menu[ITEM_COUNT].pos],
-      larson = menu[ITEM_LARSON].values[menu[ITEM_LARSON].pos],
-      version = menu[ITEM_VERSION].values[menu[ITEM_VERSION].pos],
-      vtxMode = getVtxMode()
-    }
+
+    local args = prepareVtxArgs()
+    args.color = menu[ITEM_LED].values[menu[ITEM_LED].pos]
+    args.count = menu[ITEM_COUNT].values[menu[ITEM_COUNT].pos]
+    args.larson = menu[ITEM_LARSON].values[menu[ITEM_LARSON].pos]
+    args.version = menu[ITEM_VERSION].values[menu[ITEM_VERSION].pos]
     com.sendLedVtxConfig(args)  -- TODO: transfer all parameters
   end
 end
