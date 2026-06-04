@@ -164,6 +164,16 @@ local function queueWrite(id, value)
 end
 
 
+local function popFirst(queue)
+  local item = queue[1]
+  for i = 1, #queue-1 do
+    queue[i] = queue[i+1]
+  end
+  queue[#queue] = nil
+  return item
+end
+
+
 local function sendVtxConfig(args)
   doneFlag = false
   failFlag = false
@@ -221,7 +231,7 @@ local function mainLoop()
   end
 
   if #writeQueue > 0 then
-    local item = table.remove(writeQueue, 1)
+    local item = popFirst(writeQueue)
     crossfireTelemetryPush(CRSF_FRAMETYPE_PARAMETER_WRITE,
       { CRSF_ADDRESS_TX_MODULE, CRSF_ADDRESS_HANDSET, item.id, item.value })
     nextPushTime = now + 5
@@ -236,7 +246,7 @@ local function mainLoop()
   end
 
   if #readQueue > 0 then
-    local id = table.remove(readQueue, 1)
+    local id = popFirst(readQueue)
     if id then
       crossfireTelemetryPush(CRSF_FRAMETYPE_PARAMETER_READ,
         { CRSF_ADDRESS_TX_MODULE, CRSF_ADDRESS_HANDSET, id, 0 })
