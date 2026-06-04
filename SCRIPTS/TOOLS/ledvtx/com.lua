@@ -110,6 +110,9 @@ end
 
 local function prepareVtxCommand(band, channel, power)
   local cmd = {}
+  if power < 1 then
+    power = 1
+  end
   cmd.header = MSP_VTX_SET_CONFIG
   cmd.payload = { (band-1)*8 + (channel-1), 0, power, 0 }
   cmd.write = true

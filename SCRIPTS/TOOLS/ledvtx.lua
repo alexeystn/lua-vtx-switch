@@ -44,6 +44,8 @@ local vtxModeIds = {VTX_MODE_MSP, VTX_MODE_ELRS}
 
 local powerLabels = {}
 local powerIds = {}
+powerLabels[#powerLabels+1] = "-"
+powerIds[#powerIds+1] = 0
 for i = 1, 8 do
   powerLabels[#powerLabels+1] = tostring(i)
   powerIds[#powerIds+1] = i
