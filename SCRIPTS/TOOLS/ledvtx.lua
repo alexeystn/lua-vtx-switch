@@ -26,8 +26,8 @@ local maxLedCount = 32
 local colorLabels = { "Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Violet", "Magenta", "White", "Black", "   * * * *" }
 local colorIds = { 2, 3, 4, 6, 8, 10, 11, 12, 1, 0, nil }
 
-local bandNames = { "Raceband", "Fatshark", "Lowband"}
-local bandIds = { 5, 4, 6 }
+local bandNames = { "Band A", "Band B", "Band E", "Fatshark", "Raceband", "Lowband"}
+local bandIds = { 1, 2, 3, 4, 5, 6 }
 
 local switchLabels = {"OFF", "ON"}
 local switchIds = {0, 1}
@@ -37,8 +37,8 @@ local versionIds = {0, 1}
 
 local powerLabels = {}
 local powerIds = {}
-for i = 0, 4 do
-  powerLabels[#powerLabels+1] = tostring(i+1)
+for i = 1, 8 do
+  powerLabels[#powerLabels+1] = tostring(i)
   powerIds[#powerIds+1] = i
 end
 
@@ -51,7 +51,7 @@ end
 
 local channelLabels = {}
 local channelIds = {}
-for iBand = 1, 3 do
+for iBand = 1, #bandNames do
   for iCh = 1, 8 do
     channelLabels[#channelLabels+1] = bandNames[iBand] .. " " .. tostring(iCh)
     channelIds[#channelIds+1] = {bandIds[iBand], iCh}
@@ -74,6 +74,7 @@ local menuPosition = ITEM_LED
 local isItemActive = false
 local isOptionsMenuActive = false
 local state = IDLE
+local vtxConfigVersion = nil
 
 
 local function itemIncrease()
@@ -147,6 +148,32 @@ local function drawDisplay()
 end
 
 
+local function applyVtxConfig(config_)
+  if not config_ or config_.version == vtxConfigVersion then
+    return
+  end
+  if menuPosition == ITEM_VTX or isItemActive or state ~= IDLE then
+    return
+  end
+  -- Mirror the current TX-module VTX state into the menu without forcing a write.
+  for i = 1, #channelIds do
+    if channelIds[i][1] == config_.band and channelIds[i][2] == config_.channel then
+      menu[ITEM_VTX].pos = i
+      vtxConfigVersion = config_.version
+      break
+    end
+  end
+  if config_.power then
+    for i = 1, #powerIds do
+      if powerIds[i] == config_.power then
+        menu[ITEM_POWER].pos = i
+        break
+      end
+    end
+  end
+end
+
+
 local function processEnterPress()
   if menuPosition == ITEM_OPTS then
     menuPosition = ITEM_SAVE + 1
@@ -176,6 +203,7 @@ end
 
 local function run_func(event)
   com.mainLoop()
+  applyVtxConfig(com.getVtxConfig())
   if state ~= BUSY then
     if isItemActive then
       if event == EVT_VIRTUAL_INC or event == EVT_VIRTUAL_INC_REPT then
