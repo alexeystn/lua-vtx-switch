@@ -85,6 +85,7 @@ local isItemActive = false
 local isOptionsMenuActive = false
 local state = IDLE
 local vtxConfigVersion = nil
+local statusText = nil
 
 
 local function getVtxMode()
@@ -125,6 +126,19 @@ local function menuMoveUp()
 end
 
 
+local function refreshStatus()
+  local event
+  statusText, event = com.getStatus()
+  if statusText then
+    state = BUSY
+  elseif event == 1 then
+    state = DONE
+  elseif event == -1 then
+    state = FAIL
+  end
+end
+
+
 local function drawDisplay()
   lcd.clear()
   if isOptionsMenuActive then
@@ -157,15 +171,9 @@ local function drawDisplay()
     gui.drawSelector(1, colorLabels[menu[ITEM_LED].pos], menuPosition==ITEM_LED, isItemActive)
     gui.drawSelector(2, channelLabels[menu[ITEM_VTX].pos], menuPosition==ITEM_VTX, isItemActive)
 
-    local btnText, event
-    btnText, event = com.getStatus()
-    btnSelected = (not btnText) and (menuPosition == ITEM_SAVE)
-    if not btnText then
-      if event == 1 then
-        state = DONE
-      elseif event == -1 then
-        state = FAIL
-      end
+    local btnText = statusText
+    btnSelected = (not statusText) and (menuPosition == ITEM_SAVE)
+    if not statusText then
       if state == DONE then
         btnText = "Done"
       elseif state == FAIL then
@@ -173,8 +181,6 @@ local function drawDisplay()
       else
         btnText = "Save"
       end
-    else 
-      state = BUSY
     end
     gui.drawOptions(menuPosition == ITEM_OPTS)
     gui.drawButton(btnText, btnSelected)
@@ -259,6 +265,7 @@ end
 
 local function run_func(event)
   com.mainLoop(getVtxMode())
+  refreshStatus()
   if getVtxMode() == VTX_MODE_ELRS then
     applyVtxConfig(com.getVtxConfig())
   end
